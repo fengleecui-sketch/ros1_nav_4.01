@@ -1,0 +1,33 @@
+<launch>
+  <node pkg="livox_cloud_to_scan"
+        type="cloud_to_scan_node"
+        name="cloud_to_scan_node"
+        output="screen">
+
+    <!-- 改成你真实的点云话题 -->
+    <param name="cloud_topic" value="/livox/lidar"/>
+
+    <!-- 输出到 /scan，RViz 里选 LaserScan 显示 -->
+    <param name="scan_topic" value="/scan"/>
+
+    <!-- 把点云变换到哪个坐标系做2D投影（建议 base_link） -->
+    <param name="target_frame" value="livox_frame"/>
+    <param name="output_frame" value="livox_frame"/>
+
+    <!-- 2D扫描参数 -->
+    <param name="angle_min" value="-3.14159"/>
+    <param name="angle_max" value="3.14159"/>
+    <param name="angle_increment" value="0.005"/>
+
+    <param name="range_min" value="0.10"/>
+    <param name="range_max" value="30.0"/>
+
+    <!-- 只取某个高度范围的点（非常关键：把3D“切片”成2D） -->
+    <!-- <param name="z_min" value="-0.20"/> -->
+    <param name="z_min" value="-0.05"/>
+    <param name="z_max" value="0.05"/>
+
+    <!-- 点太密可 stride>1 -->
+    <param name="stride" value="1"/>
+  </node>
+</launch>

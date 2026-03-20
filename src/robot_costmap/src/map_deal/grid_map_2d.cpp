@@ -1,0 +1,98 @@
+/**
+ * Copyright (C) 2022, RAM-LAB, Hong Kong University of Science and Technology
+ * This file is part of GPIR (https://github.com/jchengai/gpir).
+ * If you find this repo helpful, please cite the respective publication as
+ * listed on the above website.
+ */
+
+#include "map_deal/grid_map_2d.h"
+
+namespace map_deal {
+
+template <typename T>
+// 圆形填充
+void GridMap2D<T>::FillCircle(const Eigen::Vector2d& center, double radius) {
+  cv::Mat grid_mat(cell_num_[1], cell_num_[0],
+                   CV_MAKETYPE(cv::DataType<T>::type, 1), map_data_.data());
+  // Mat (int rows, int cols, int type, void *data, size_t step=AUTO_STEP)
+  Eigen::Vector2i index;
+  // 将世界坐标系转换为栅栏格坐标系
+  Coordinate2Index(center, &index);
+
+  int grid_radius = radius * cell_resolution_inv_[0];
+  cv::Point2i cv_center(index(0), index(1));
+  // 使用opencv的函数画圆
+  cv::circle(grid_mat, cv_center, grid_radius, cv::Scalar(1), -1); //normally
+  // cv::circle(grid_mat, cv_center, grid_radius, cv::Scalar(255), 10);
+  // int non_zero_num = cv::countNonZero(grid_mat);
+  // if (non_zero_num >= 1)
+  // {
+  //   std::cout<<"non zero num"<<non_zero_num<<std::endl;
+  //   cv::imshow("Display window", grid_mat);
+  //   cv::waitKey(0);
+  // }
+}
+
+template <typename T>
+// 填充任意凸或者凹多边形
+void GridMap2D<T>::FillPoly(const vector_Eigen<Eigen::Vector2d>& points) {
+  cv::Mat grid_mat(cell_num_[1], cell_num_[0],
+                   CV_MAKETYPE(cv::DataType<T>::type, 1), map_data_.data());
+
+  Eigen::Vector2i index;
+  std::vector<cv::Point2i> poly;
+  // 将点转换成整数
+  for (const auto& p : points) {
+    Coordinate2Index(p, &index);
+    poly.emplace_back(cv::Point2i(index(0), index(1)));
+  }
+  std::vector<std::vector<cv::Point2i>> polys;
+  polys.emplace_back(poly);
+  cv::fillPoly(grid_mat, polys, cv::Scalar(1));
+}
+
+template <typename T>
+// 填充凸多边形
+void GridMap2D<T>::FillConvexPoly(const vector_Eigen<Eigen::Vector2d>& points) {
+  cv::Mat grid_mat(cell_num_[1], cell_num_[0],
+                   CV_MAKETYPE(cv::DataType<T>::type, 1), map_data_.data());
+
+  Eigen::Vector2i index;
+  std::vector<cv::Point2i> convex_poly;
+  for (const auto& p : points) {
+    Coordinate2Index(p, &index);
+    convex_poly.emplace_back(cv::Point2i(index(0), index(1)));
+  }
+  cv::fillConvexPoly(grid_mat, convex_poly, cv::Scalar(static_cast<T>(1)));
+}
+
+template <typename T>
+// 填充各种线
+void GridMap2D<T>::PolyLine(const vector_Eigen<Eigen::Vector2d>& points) {
+  cv::Mat grid_mat(cell_num_[1], cell_num_[0],
+                   CV_MAKETYPE(cv::DataType<T>::type, 1), map_data_.data());
+  Eigen::Vector2i index;
+  std::vector<cv::Point2i> polyline;
+  for (const auto& p : points) {
+    Coordinate2Index(p, &index);
+    polyline.emplace_back(cv::Point2i(index(0), index(1)));
+  }
+  std::vector<std::vector<cv::Point2i>> polylines;
+  polylines.emplace_back(std::move(polyline));
+  cv::polylines(grid_mat, polylines, false, cv::Scalar(static_cast<T>(1)));
+}
+
+template <typename T>
+void GridMap2D<T>::FillEntireRow(const double y_coord) {
+  const int row_index =
+      std::floor((y_coord - origin_[1]) * cell_resolution_inv_[1]);
+  if (row_index < 0 || row_index > cell_num_[1] - 1) return;
+
+  int address = row_index * cell_num_[0];
+  std::fill(&map_data_[address], &map_data_[address] + cell_num_[0],
+            static_cast<T>(1));
+}
+
+template class GridMap2D<int>;
+template class GridMap2D<uint8_t>;
+}  // namespace planning

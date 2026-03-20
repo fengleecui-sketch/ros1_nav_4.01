@@ -1,0 +1,6 @@
+<launch>
+    <!-- 启动 plicp_odometry 节点 -->
+  <node name="carto_locatization_node" pkg="robot_locatization" type="carto_locatization_node" output="screen" >
+    
+  </node>
+</launch>

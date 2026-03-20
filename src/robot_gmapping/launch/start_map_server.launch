@@ -1,0 +1,20 @@
+
+<launch>
+  <!-- 保存地图 -->
+  <arg name="map_name" default="my_map"/>
+  
+  <!-- 从环境变量读时间戳 -->
+  <arg name="time_str" default="$(env MAP_TIME)"/>
+
+  <arg name="filename"
+       default="$(find robot_gmapping)/map/$(arg map_name)_$(arg time_str)"/>
+
+  <node name="map_save"
+        pkg="map_server"
+        type="map_saver"
+        args="-f $(arg filename)"
+        output="screen"/>
+</launch>
+
+
+<!-- rosrun map_server map_saver -f "$(rospack find robot_gmapping)/map/wuli1_$(date +"%Y-%m-%d_%H-%M-%S")" -->

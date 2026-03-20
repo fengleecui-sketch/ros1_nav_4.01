@@ -1,0 +1,22 @@
+<launch>
+  <arg name="config_dir" default="$(find tri_steer_cartographer)/config"/>
+  <arg name="config_basename" default="tri_steer_2d.lua"/>
+
+  <!-- 你的仿真激光话题，默认 /scan -->
+  <arg name="scan_topic" default="/not_true_scan"/>
+
+  <!-- Cartographer SLAM -->
+  <node pkg="cartographer_ros" type="cartographer_node" name="cartographer_node" output="screen"
+        args="-configuration_directory $(arg config_dir)
+              -configuration_basename $(arg config_basename)">
+    <remap from="scan" to="$(arg scan_topic)"/>
+  </node>
+
+  <!-- 把 submap 转 occupancy grid -->
+  <node pkg="cartographer_ros" type="occupancy_grid_node" name="occupancy_grid_node" output="screen">
+    <param name="resolution" value="0.05"/>
+  </node>
+</launch>
+
+
+<!-- rostopic echo -n 1 /not_true_scan/header -->

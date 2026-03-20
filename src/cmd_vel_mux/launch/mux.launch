@@ -1,0 +1,5 @@
+<launch>
+  <node pkg="cmd_vel_mux" type="cmd_vel_mux.py" name="cmd_vel_mux" output="screen">
+    <param name="manual_timeout" value="0.35"/>
+  </node>
+</launch>

@@ -1,0 +1,10 @@
+# pid参数设定
+pid_p: 50.0   # p设定
+pid_i: 0      # i设定
+pid_d: 1      # d设定
+pid_outmax: 1.0   # 输出最大
+pid_outmin: -1.0  # 输出最小
+pid_intmax: 3     # 积分最大
+pid_intdt: 0.01   # 积分时间
+
+forwardDistance: 0.1  #到终点0.1m算到达目标

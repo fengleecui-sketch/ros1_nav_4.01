@@ -1,0 +1,12 @@
+<launch>
+  <!-- 加载地图描述 -->
+  <!-- <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/5all.yaml"/> -->
+  <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/test_world01.yaml"/>
+  <!-- <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/sim.yaml"/> -->
+  <!-- <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/complex.yaml"/> -->
+  <!-- <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/NEW_M_5F.yaml"/> -->
+
+  <!-- 运行rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find ros_gazebo_control)/rviz/robot_model_map.rviz" />
+</launch>
+

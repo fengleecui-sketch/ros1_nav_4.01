@@ -1,0 +1,29 @@
+<!-- 实际状态下的pl-icp算法测试文件 -->
+<launch>
+
+  <!-- true使用bag的时间戳 -->
+  <!-- false使用ros系统的时间戳 -->
+  <param name="use_sim_time" value="false" />
+
+  <!-- base_link to laser_link 仿真雷达用的静态坐标变换 坐标位置是： 0 0 0.254
+       实际雷达的坐标变换是还没测量：
+       如果用实际的雷达，base_link和 laser_link的坐标变换要修改成laser 否则会提示不存在雷达到底盘的坐标变换-->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="link_broadcaster" 
+    args="0.25 0.25 0.15 0 0 3.1415926 base_link laser" />
+
+  <!-- 启动 plicp_odometry 节点 -->
+  <node name="plicp_odometry_node" pkg="robot_locatization" type="plicp_odometry_node" output="screen" >
+    <!-- 如果使用的是真正的雷达消息就是scan 如果是仿真的雷达就是laser_scan -->
+    <param name="laserType" type="string" value="scan" />
+    <!-- 如果使用的是真正的里程计消息就是aclodom 如果是仿真的里程计就是odom -->
+    <param name="odomType" type="string" value="aclodom" />
+
+    <!-- 获取参数 -->
+    <rosparam file="$(find robot_locatization)/config/plicp_odometry.yaml" command="load"/>
+  </node>
+
+  <!-- launch rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find robot_locatization)/rviz/plicp_odometry_acl.rviz" />
+
+</launch>

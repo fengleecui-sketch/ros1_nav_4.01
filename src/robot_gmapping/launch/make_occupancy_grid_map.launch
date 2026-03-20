@@ -1,0 +1,14 @@
+
+
+<launch>
+
+    <!-- 启动节点 -->
+    <node name="occupancy_grid_node"
+        pkg="robot_gmapping" type="occupancy_grid_node" output="screen" />
+    
+    <!-- launch rviz -->
+    <node name="rviz" pkg="rviz" type="rviz" required="true"
+        args="-d $(find robot_gmapping)/config/occupancy_grid.rviz" />
+
+
+</launch>

@@ -1,0 +1,12 @@
+
+
+<launch>
+    <!-- true使用bag的时间戳 -->
+    <!-- false使用系统的时间戳 -->
+    <param name="use_sim_time" value="false" />
+    <!-- 启动节点 -->
+    <node name="laser_scan_node" pkg="read_laser_data" type="laser_scan_node" output="screen" >
+        <!-- 如果使用的是真正的雷达消息就是scan 如果是仿真的雷达就是laser_scan -->
+        <param name="laserType" type="string" value="laser_scan" />
+    </node>
+</launch>

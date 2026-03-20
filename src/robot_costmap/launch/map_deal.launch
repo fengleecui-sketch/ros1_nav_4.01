@@ -1,0 +1,36 @@
+<launch>
+  <node name="map_deal_node" pkg="robot_costmap" type="map_deal_node" output="screen">
+    <!-- 全局代价地图参数设定 -->
+    <!-- 设定全局代价地图上下阈值 -->
+    <param name="global_cost_map/costdownvalue" value="90" type="int" />
+    <param name="global_cost_map/costupvalue" value="97" type="int" />
+    <!-- 设定全局代价地图上下阈值系数 , 这两个系数与上下阈值的乘积不能超过100 -->
+    <param name="global_cost_map/costdownk" value="0" type="double" />
+    <param name="global_cost_map/costupk" value="0.5" type="double" />
+    <!-- 设定人工势场宽度 -->
+    <param name="global_cost_map/esdfwidth" value="3" type="int" />
+
+    <!-- 局部代价地图参数设定 -->
+    <!-- 设定局部代价地图上下阈值 -->
+    <param name="local_cost_map/costdownvalue" value="75" type="int" />
+    <param name="local_cost_map/costupvalue" value="80" type="int" />
+    <!-- 设定局部代价地图上下阈值系数 , 这两个系数与上下阈值的乘积不能超过100 -->
+    <param name="local_cost_map/costdownk" value="1.0" type="double" />
+    <param name="local_cost_map/costupk" value="1.0" type="double" />
+
+    <!-- 仿真还是真实场景运行，仿真需要对雷达点云进行坐标变换，真实运行使用的是Carto变换好的数据直接用就行 -->
+    <param name="local_map/is_use_sim" value="true" type="bool" />
+    <!-- 按照激光雷达的扫描范围设定局部地图的范围 -->
+    <param name="local_map/xmin" value="-4.0" type="double" />
+    <param name="local_map/ymin" value="-4.0" type="double" />
+    <param name="local_map/xmax" value="4.0" type="double" />
+    <param name="local_map/ymax" value="4.0" type="double" />
+    <param name="local_map/resolution" value="0.1" type="double" />
+    <!-- 膨胀地图半径 -->
+    <param name="local_map/inflate" value="0.40" type="double" />
+    <!-- 虚拟地图尺寸大小 -->
+    <param name="local_map/virtual_map" value="1" type="double" />
+
+  </node>
+
+</launch>

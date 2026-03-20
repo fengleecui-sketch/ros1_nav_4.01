@@ -1,0 +1,35 @@
+cruise_num: 5
+# 新机械楼固定导航点
+first_point_x: 1.22
+first_point_y: 5.32
+second_point_x: 5.77
+second_point_y: 5.39
+third_point_x: 6.14
+third_point_y: -1.14
+forth_point_x: -29.00
+forth_point_y: -11.01
+fifth_point_x: -29.66
+fifth_point_y: 20.43
+
+# test_world01 固定导航点
+# first_point_x: 5.27
+# first_point_y: 24.41
+# second_point_x: 21.85
+# second_point_y: 24.71
+# third_point_x: 12.83
+# third_point_y: -0.68
+# forth_point_x: 0.00
+# forth_point_y: 18.01
+# fifth_point_x: 24.83
+# fifth_point_y: 13.88 
+
+# first_point_x: 0.4
+# first_point_y: 27.0
+# second_point_x: 25.23
+# second_point_y: 25.64
+# third_point_x: 24.6
+# third_point_y: -0.78
+# forth_point_x: 13.64
+# forth_point_y: 26.50
+# fifth_point_x: -0.31
+# fifth_point_y: 11.85 

@@ -1,0 +1,32 @@
+<launch>
+  <node name="Hybrid_local_node" pkg="robot_navigation" type="Hybrid_local_node" output="screen">
+    <!-- // 规划器允许的最大时间长度，即规划出的路径时间不能超过max_tau_ -->
+    <param name="search/max_tau" value="0.6" type="double"/>
+    <!-- 路径规划初始时的最大时间跨度，一般情况下会比 max_tau 大，用于加快搜索速度 -->
+    <param name="search/init_max_tau" value="0.8" type="double"/>
+    <!-- 运动平台最大速度 -->
+    <param name="search/max_vel" value="3.0" type="double"/>
+    <!-- 运动平台最大加速度 -->
+    <param name="search/max_acc" value="3.0" type="double"/>
+	  <!--控制路径规划中时间成本的权重，用于平衡时间成本和距离成本。值越大，时间成本就越重要 -->
+    <param name="search/w_time" value="10.0" type="double"/>
+    <!-- 控制路径规划的搜索深度，即在未来多少秒内进行路径规划。值越大，搜索深度就越深 -->
+    <param name="search/horizon" value="30.0" type="double"/>
+    <!-- 控制启发式函数中时间成本的权重 -->
+    <param name="search/lambda_heu" value="5.0" type="double"/>
+    <!-- 控制 A* 算法的搜索分辨率，用于控制搜索空间的大小。值越小，搜索空间就越大，但搜索速度就会变慢 -->
+    <!-- 一般是地图分辨率 -->
+    <param name="search/resolution_astar" value="0.05" type="double"/>
+    <!-- 时间分辨率 -->
+    <param name="search/time_resolution" value="0.8" type="double"/>
+    <!-- 边缘速度，或者说具体边缘什么需要后续对算法进一步理解才能知道 -->
+    <param name="search/margin" value="0.2" type="double"/>
+    <!-- 最长的路径 -->
+    <param name="search/allocate_num" value="100000" type="int"/>
+    <!-- 检查路径点的数目 -->
+    <param name="search/check_num" value="5" type="int"/>
+
+    <param name="search/is_use_esdf" value="true" type="bool"/>
+  </node>
+</launch>
+

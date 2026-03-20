@@ -1,0 +1,13 @@
+<launch>
+  <!-- 1) 速度仲裁：手动优先，自动兜底 -->
+  <include file="$(find cmd_vel_mux)/launch/mux.launch"/>
+
+  <!-- 2) 底盘驱动：订阅 /cmd_vel，输出关节命令 -->
+  <include file="$(find tri_steer_drive)/launch/drive.launch"/>
+
+  <!-- 3) 键盘（可选）：不启动也不影响自动 -->
+  <arg name="use_teleop" default="false"/>
+  <group if="$(arg use_teleop)">
+    <include file="$(find tri_steer_teleop)/launch/teleop.launch"/>
+  </group>
+</launch>

@@ -1,0 +1,22 @@
+<launch>
+
+  <arg name="map_file" default="$(find robot_navigation)/maps/test_world01.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
+    <param name="frame_id" value="map"/>
+  </node>
+ 
+  <node name="Astar_node" pkg="robot_navigation" type="Astar_node" output="screen">
+    <!-- //0 1 2 3方法 欧氏距离 曼哈顿 切比学夫 对角线 -->
+    <param name="astar_heuristic/distance" value="3"/>
+    <param name="astar_glength/distance" value="3"/>
+    <param name="astar_weight/g" value="1.0"/>
+    <param name="astar_weight/h" value="1.0"/>
+
+    <param name="astar_search/radius" value="30.0"/>
+  </node>
+  <node pkg="tf" type="static_transform_publisher" name="odom_combined_broadcaster" args="0 0 0 0 0 0 /map /odom 100" />
+ 
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robot_navigation)/rviz/astar.rviz"/>
+  
+</launch>
+

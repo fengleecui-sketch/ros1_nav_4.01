@@ -1,0 +1,38 @@
+<launch>
+  <param name="use_sim_time" value="true"/>
+
+  <!-- 键盘：固定档位，松手即停 -->
+  <node pkg="tri_steer_keyboard" type="tri_steer_keyboard.py" name="tri_steer_keyboard" output="screen">
+    <param name="v_cmd" value="0.8"/>  <!-- m/s -->
+    <param name="w_cmd" value="0.80"/>  <!-- rad/s -->
+    <param name="rate" value="30"/>
+  </node>
+
+  <!-- 运动学解算：cmd_vel -> 3 舵角 + 3 轮速 -->
+  <node pkg="tri_steer_keyboard" type="tri_steer_kinematics.py" name="tri_steer_kinematics" output="screen">
+
+     <!-- <remap from="/cmd_vel" to="/chassis_control"/> -->
+    <!-- 你的底盘参数 -->
+    <param name="wheel_base_radius" value="0.35335"/>   <!-- m -->
+    <param name="wheel_radius" value="0.05"/>           <!-- m -->
+    <rosparam param="mount_angles_deg_cw">[-180.0, -60.0, 60.0]</rosparam>
+
+    <!-- steer 方向：2号、3号反向 -->
+    <rosparam param="steer_sign">[1, 1, 1]</rosparam>
+
+    <!-- drive 方向一般不用动；如果发现2/3轮驱动也反，再改这里 -->
+    <rosparam param="drive_sign">[1, 1, 1]</rosparam>
+
+    <!-- 先保守，防崩 -->
+    <param name="max_vx" value="0.8"/>
+    <param name="max_vy" value="0.8"/>
+    <param name="max_wz" value="1.00"/>
+
+    <!-- 防崩关键参数 -->
+    <param name="steer_rate_limit" value="2.0"/>  <!-- rad/s -->
+    <param name="wheel_acc_limit"  value="5.0"/> <!-- rad/s^2 -->
+
+    <param name="cmd_timeout" value="0.25"/>
+    <param name="rate" value="50"/>
+  </node>
+</launch>

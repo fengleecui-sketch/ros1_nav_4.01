@@ -1,0 +1,6 @@
+<launch>
+  <node pkg="tri_steer_teleop" type="keyboard_teleop_fixed.py" name="tri_steer_teleop" output="screen">
+    <param name="v_cmd" value="0.30"/>
+    <param name="w_cmd" value="0.40"/>
+  </node>
+</launch>

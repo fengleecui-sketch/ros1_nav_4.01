@@ -1,0 +1,42 @@
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+# ===== 转向（舵向）关节：位置控制 =====
+joint11_position_controller:
+  type: position_controllers/JointPositionController
+  joint: joint11
+
+joint21_position_controller:
+  type: position_controllers/JointPositionController
+  joint: joint21
+
+joint31_position_controller:
+  type: position_controllers/JointPositionController
+  joint: joint31
+
+# ===== 驱动轮关节：速度控制 =====
+joint12_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: joint12
+
+joint22_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: joint22
+
+joint32_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: joint32
+
+# ===== 驱动轮关节：速度控制 =====
+joint13_position_controller:
+  type: position_controllers/JointPositionController
+  joint: joint13
+
+joint23_position_controller:
+  type: position_controllers/JointPositionController
+  joint: joint23
+
+joint33_position_controller:
+  type: position_controllers/JointPositionController
+  joint: joint33

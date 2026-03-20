@@ -1,0 +1,490 @@
+原始路径点数目:380
+[ WARN] [1705391901.337696664]: astar search time is:78.191332
+[ WARN] [1705391901.341447090]: sample path time-向量:0.011351
+[ WARN] [1705391901.341984945]: sample path time-求导:0.484504
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目837
+[ WARN] [1705391901.343986841]: path opt time is:6.177112
+mapInitFlag1
+getStartFlag1
+-0.0857436
+ -0.162264
+18.3466
+1.25481
+原始路径点数目:380
+[ WARN] [1705391902.335583951]: astar search time is:81.262935
+[ WARN] [1705391902.339178391]: sample path time-向量:0.010230
+[ WARN] [1705391902.339716679]: sample path time-求导:0.505470
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目837
+[ WARN] [1705391902.341860951]: path opt time is:6.075727
+mapInitFlag1
+getStartFlag1
+-0.0857599
+ -0.162284
+18.3466
+1.25481
+原始路径点数目:380
+[ WARN] [1705391903.353609588]: astar search time is:94.441493
+[ WARN] [1705391903.356688649]: sample path time-向量:0.010531
+[ WARN] [1705391903.357300992]: sample path time-求导:0.558719
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目837
+[ WARN] [1705391903.359268305]: path opt time is:5.568733
+mapInitFlag1
+getStartFlag1
+-0.0858006
+ -0.162321
+18.3466
+1.25481
+原始路径点数目:380
+[ WARN] [1705391904.327442712]: astar search time is:73.858630
+[ WARN] [1705391904.329198521]: sample path time-向量:0.011333
+[ WARN] [1705391904.329734064]: sample path time-求导:0.485336
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目837
+[ WARN] [1705391904.331591651]: path opt time is:3.996836
+mapInitFlag1
+getStartFlag1
+-0.0858267
+ -0.162321
+2.8807
+13.686
+原始路径点数目:296
+[ WARN] [1705391905.336183562]: astar search time is:74.006232
+[ WARN] [1705391905.339257460]: sample path time-向量:0.009481
+[ WARN] [1705391905.339721457]: sample path time-求导:0.410483
+文件已创建
+continuSample:24
+inflectPoins:16
+优化路径点数目584
+[ WARN] [1705391905.341636178]: path opt time is:5.334331
+mapInitFlag1
+getStartFlag1
+-0.0858686
+ -0.162328
+2.8807
+13.686
+原始路径点数目:296
+[ WARN] [1705391906.322273922]: astar search time is:67.211615
+[ WARN] [1705391906.327812716]: sample path time-向量:0.011985
+[ WARN] [1705391906.328347847]: sample path time-求导:0.450311
+文件已创建
+continuSample:24
+inflectPoins:16
+优化路径点数目584
+[ WARN] [1705391906.330074902]: path opt time is:7.724536
+mapInitFlag1
+getStartFlag1
+-0.0859029
+  -0.16237
+2.8807
+13.686
+原始路径点数目:296
+[ WARN] [1705391907.317969154]: astar search time is:61.011105
+[ WARN] [1705391907.319787042]: sample path time-向量:0.007583
+[ WARN] [1705391907.320325467]: sample path time-求导:0.465007
+文件已创建
+continuSample:24
+inflectPoins:16
+优化路径点数目584
+[ WARN] [1705391907.322790926]: path opt time is:4.709861
+mapInitFlag1
+getStartFlag1
+-0.0858928
+ -0.162397
+2.8807
+13.686
+原始路径点数目:296
+[ WARN] [1705391908.315760789]: astar search time is:60.442349
+[ WARN] [1705391908.322122424]: sample path time-向量:0.008374
+[ WARN] [1705391908.322603556]: sample path time-求导:0.423541
+文件已创建
+continuSample:24
+inflectPoins:16
+优化路径点数目584
+[ WARN] [1705391908.324291757]: path opt time is:8.452697
+mapInitFlag1
+getStartFlag1
+-0.0859237
+ -0.162429
+2.8807
+13.686
+原始路径点数目:296
+[ WARN] [1705391909.320520632]: astar search time is:65.164255
+[ WARN] [1705391909.323614215]: sample path time-向量:0.011199
+[ WARN] [1705391909.324081928]: sample path time-求导:0.391422
+文件已创建
+continuSample:24
+inflectPoins:16
+优化路径点数目584
+[ WARN] [1705391909.326143476]: path opt time is:5.474801
+mapInitFlag1
+getStartFlag1
+-0.0859639
+  -0.16246
+-1.32056
+ 11.9718
+原始路径点数目:244
+[ WARN] [1705391910.319382277]: astar search time is:63.793917
+[ WARN] [1705391910.321130720]: sample path time-向量:0.006732
+[ WARN] [1705391910.321493637]: sample path time-求导:0.329445
+文件已创建
+continuSample:16
+inflectPoins:8
+优化路径点数目386
+[ WARN] [1705391910.324232553]: path opt time is:4.748246
+mapInitFlag1
+getStartFlag1
+-0.0859849
+ -0.162472
+-1.32056
+ 11.9718
+原始路径点数目:244
+[ WARN] [1705391911.314772843]: astar search time is:58.260153
+[ WARN] [1705391911.316332634]: sample path time-向量:0.004789
+[ WARN] [1705391911.316688100]: sample path time-求导:0.323447
+文件已创建
+continuSample:16
+inflectPoins:8
+优化路径点数目375
+[ WARN] [1705391911.320983694]: path opt time is:6.050681
+mapInitFlag1
+getStartFlag1
+-0.0860097
+ -0.162493
+-1.32056
+ 11.9718
+原始路径点数目:244
+[ WARN] [1705391912.313425317]: astar search time is:55.191989
+[ WARN] [1705391912.319705248]: sample path time-向量:0.006056
+[ WARN] [1705391912.320089775]: sample path time-求导:0.324869
+文件已创建
+continuSample:16
+inflectPoins:8
+优化路径点数目375
+[ WARN] [1705391912.321788362]: path opt time is:8.243001
+mapInitFlag1
+getStartFlag1
+-0.0860506
+ -0.162509
+-1.32056
+ 11.9718
+原始路径点数目:244
+[ WARN] [1705391913.322610120]: astar search time is:61.772085
+[ WARN] [1705391913.324868506]: sample path time-向量:0.004919
+[ WARN] [1705391913.325184907]: sample path time-求导:0.286648
+文件已创建
+continuSample:16
+inflectPoins:8
+优化路径点数目375
+[ WARN] [1705391913.326411919]: path opt time is:3.685876
+mapInitFlag1
+getStartFlag1
+-0.0860509
+ -0.162506
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391914.330123920]: astar search time is:72.279473
+[ WARN] [1705391914.333582341]: sample path time-向量:0.006643
+[ WARN] [1705391914.333879364]: sample path time-求导:0.250743
+文件已创建
+continuSample:24
+inflectPoins:16
+优化路径点数目232
+[ WARN] [1705391914.334927005]: path opt time is:4.652327
+mapInitFlag1
+getStartFlag1
+-0.0860915
+ -0.162535
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391915.324035105]: astar search time is:69.189742
+[ WARN] [1705391915.325473194]: sample path time-向量:0.004849
+[ WARN] [1705391915.325708244]: sample path time-求导:0.210978
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目199
+[ WARN] [1705391915.326791750]: path opt time is:2.687038
+mapInitFlag1
+getStartFlag1
+-0.086128
+-0.162566
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391916.317476942]: astar search time is:55.172276
+[ WARN] [1705391916.320315918]: sample path time-向量:0.007599
+[ WARN] [1705391916.320737989]: sample path time-求导:0.362680
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目199
+[ WARN] [1705391916.322846184]: path opt time is:5.233882
+mapInitFlag1
+getStartFlag1
+-0.0861706
+ -0.162589
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391917.318682877]: astar search time is:65.288171
+[ WARN] [1705391917.321690147]: sample path time-向量:0.008101
+[ WARN] [1705391917.321992119]: sample path time-求导:0.234524
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目199
+[ WARN] [1705391917.323128636]: path opt time is:4.362354
+mapInitFlag1
+getStartFlag1
+-0.0861744
+ -0.162586
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391918.328411423]: astar search time is:70.714545
+[ WARN] [1705391918.331646391]: sample path time-向量:0.005572
+[ WARN] [1705391918.331895759]: sample path time-求导:0.216383
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目199
+[ WARN] [1705391918.333278206]: path opt time is:4.757180
+mapInitFlag1
+getStartFlag1
+-0.0861911
+ -0.162589
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391919.319631987]: astar search time is:64.401252
+[ WARN] [1705391919.322998710]: sample path time-向量:0.005719
+[ WARN] [1705391919.323283336]: sample path time-求导:0.232483
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目199
+[ WARN] [1705391919.325025413]: path opt time is:5.287138
+mapInitFlag1
+getStartFlag1
+-0.0862095
+ -0.162598
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391920.323633603]: astar search time is:65.988053
+[ WARN] [1705391920.329009493]: sample path time-向量:0.006348
+[ WARN] [1705391920.329254875]: sample path time-求导:0.206236
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目199
+[ WARN] [1705391920.330630066]: path opt time is:6.888412
+mapInitFlag1
+getStartFlag1
+-0.0862339
+ -0.162609
+-4.82525
+ 7.34806
+原始路径点数目:171
+[ WARN] [1705391921.323704755]: astar search time is:67.966211
+[ WARN] [1705391921.327672084]: sample path time-向量:0.007679
+[ WARN] [1705391921.327995648]: sample path time-求导:0.258114
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目199
+[ WARN] [1705391921.329138258]: path opt time is:5.179474
+mapInitFlag1
+getStartFlag1
+-0.0862534
+ -0.162618
+-5.16536
+ 12.0352
+原始路径点数目:281
+[ WARN] [1705391922.317608258]: astar search time is:62.367325
+[ WARN] [1705391922.319244715]: sample path time-向量:0.009802
+[ WARN] [1705391922.319616836]: sample path time-求导:0.336391
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目397
+[ WARN] [1705391922.321217976]: path opt time is:3.487171
+mapInitFlag1
+getStartFlag1
+-0.086263
+-0.162627
+-5.16536
+ 12.0352
+原始路径点数目:281
+[ WARN] [1705391923.324427319]: astar search time is:71.057274
+[ WARN] [1705391923.327923081]: sample path time-向量:0.008689
+[ WARN] [1705391923.328362857]: sample path time-求导:0.359208
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目397
+[ WARN] [1705391923.330366199]: path opt time is:5.794554
+mapInitFlag1
+getStartFlag1
+-0.0862973
+ -0.162656
+-5.16536
+ 12.0352
+原始路径点数目:281
+[ WARN] [1705391924.322828081]: astar search time is:65.936016
+[ WARN] [1705391924.326356681]: sample path time-向量:0.007109
+[ WARN] [1705391924.326807420]: sample path time-求导:0.378674
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目397
+[ WARN] [1705391924.328873054]: path opt time is:5.930928
+mapInitFlag1
+getStartFlag1
+-0.0863108
+ -0.162669
+-5.16536
+ 12.0352
+原始路径点数目:281
+[ WARN] [1705391925.319206844]: astar search time is:61.184623
+[ WARN] [1705391925.323630391]: sample path time-向量:0.008786
+[ WARN] [1705391925.324037836]: sample path time-求导:0.368872
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目397
+[ WARN] [1705391925.325810051]: path opt time is:6.473996
+mapInitFlag1
+getStartFlag1
+-0.0863423
+ -0.162684
+-5.16536
+ 12.0352
+原始路径点数目:281
+[ WARN] [1705391926.328654114]: astar search time is:71.976889
+[ WARN] [1705391926.332094394]: sample path time-向量:0.016381
+[ WARN] [1705391926.332499059]: sample path time-求导:0.348446
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目397
+[ WARN] [1705391926.334000205]: path opt time is:5.233276
+mapInitFlag1
+getStartFlag1
+-0.0863717
+ -0.162719
+-5.16536
+ 12.0352
+原始路径点数目:281
+[ WARN] [1705391927.333701896]: astar search time is:72.606536
+[ WARN] [1705391927.338520321]: sample path time-向量:0.009978
+[ WARN] [1705391927.339541835]: sample path time-求导:0.660776
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目397
+[ WARN] [1705391927.342514122]: path opt time is:8.673732
+mapInitFlag1
+getStartFlag1
+-0.0863957
+ -0.162736
+-5.16536
+ 12.0352
+原始路径点数目:281
+[ WARN] [1705391928.325853784]: astar search time is:69.920404
+[ WARN] [1705391928.328257297]: sample path time-向量:0.006509
+[ WARN] [1705391928.328627984]: sample path time-求导:0.337302
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目397
+[ WARN] [1705391928.330185266]: path opt time is:4.168494
+mapInitFlag1
+getStartFlag1
+-0.0864166
+ -0.162754
+ 10.8336
+-2.85747
+原始路径点数目:219
+[ WARN] [1705391929.323684114]: astar search time is:66.933614
+[ WARN] [1705391929.327181413]: sample path time-向量:0.006733
+[ WARN] [1705391929.327529015]: sample path time-求导:0.307277
+文件已创建
+continuSample:16
+inflectPoins:8
+优化路径点数目342
+[ WARN] [1705391929.328927174]: path opt time is:5.169905
+mapInitFlag1
+getStartFlag1
+-0.0864325
+ -0.162761
+ 10.8336
+-2.85747
+原始路径点数目:219
+[ WARN] [1705391930.316492561]: astar search time is:61.170505
+[ WARN] [1705391930.319545967]: sample path time-向量:0.006621
+[ WARN] [1705391930.319870324]: sample path time-求导:0.286260
+文件已创建
+continuSample:16
+inflectPoins:8
+优化路径点数目342
+[ WARN] [1705391930.321446654]: path opt time is:4.767338
+mapInitFlag1
+getStartFlag1
+-0.0864516
+ -0.162763
+ 10.8336
+-2.85747
+原始路径点数目:219
+[ WARN] [1705391931.319642682]: astar search time is:67.083324
+[ WARN] [1705391931.325871495]: sample path time-向量:0.008802
+[ WARN] [1705391931.326364190]: sample path time-求导:0.405494
+文件已创建
+continuSample:16
+inflectPoins:8
+优化路径点数目342
+[ WARN] [1705391931.328172546]: path opt time is:7.960136
+mapInitFlag1
+getStartFlag1
+-0.0864696
+  -0.16277
+ 19.4886
+-2.32711
+原始路径点数目:392
+[ WARN] [1705391932.326599395]: astar search time is:72.406607
+[ WARN] [1705391932.332009240]: sample path time-向量:0.014243
+[ WARN] [1705391932.332693743]: sample path time-求导:0.581259
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目639
+[ WARN] [1705391932.334657950]: path opt time is:7.908328
+mapInitFlag1
+getStartFlag1
+-0.0865011
+ -0.162791
+ 19.4886
+-2.32711
+原始路径点数目:392
+[ WARN] [1705391933.395423542]: astar search time is:127.399004
+[ WARN] [1705391933.398607168]: sample path time-向量:0.022901
+[ WARN] [1705391933.399889962]: sample path time-求导:1.017502
+文件已创建
+continuSample:28
+inflectPoins:20
+优化路径点数目639
+[ WARN] [1705391933.403799825]: path opt time is:8.256101
+

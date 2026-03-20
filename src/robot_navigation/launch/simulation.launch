@@ -1,0 +1,64 @@
+<launch>
+  <arg name="max_vel" value="2.0" />
+  <arg name="max_acc" value="1.0" />
+  <arg name="dynamic" value="0" />
+
+  <!-- main node -->
+  <node pkg="robot_navigation" name="dyn_planner_node" type="dyn_planner_node" output="screen">
+
+  <!-- planning fsm -->
+    <param name="fsm/flight_type" value="1" type="int"/>
+    <param name="fsm/thresh_replan" value="2.0" type="double"/>
+    <param name="fsm/thresh_no_replan" value="3.0" type="double"/>
+    <param name="fsm/wp_num" value="3" type="int"/>
+
+  <!-- planner manager -->
+    <param name="manager/time_sample" value="0.5" type="double"/>
+    <param name="manager/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="manager/dynamic" value="$(arg dynamic)" type="int"/>
+    <param name="manager/margin" value="0.1" type="double"/>
+
+  <!-- path searching -->
+    <!-- hybrid astar参数设定 -->
+    <param name="search/max_tau" value="0.6" type="double"/>
+    <param name="search/init_max_tau" value="0.8" type="double"/>
+    <param name="search/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="search/max_acc" value="$(arg max_acc)" type="double"/>
+    <param name="search/w_time" value="10.0" type="double"/>
+    <param name="search/horizon" value="7.0" type="double"/>
+    <param name="search/lambda_heu" value="5.0" type="double"/>
+    <param name="search/resolution_astar" value="0.05" type="double"/>
+    <param name="search/time_resolution" value="0.8" type="double"/>
+    <param name="search/margin" value="0.1" type="double"/>
+    <param name="search/allocate_num" value="100000" type="int"/>
+    <param name="search/check_num" value="5" type="int"/>
+    <param name="search/is_use_esdf" value="false" type="bool"/>
+
+  <!-- trajectory optimization -->
+    <param name="optimization/lamda1" value="10.0" type="double"/>
+    <param name="optimization/lamda2" value="0.6" type="double"/>
+    <param name="optimization/lamda3" value="0.00001" type="double"/>
+    <param name="optimization/lamda4" value="0.001" type="double"/>
+    <param name="optimization/dist0" value="0.8" type="double"/>
+    <param name="optimization/dist1" value="0.0" type="double"/>
+    <param name="optimization/max_vel" value="$(arg max_vel)" type="double"/>
+    <param name="optimization/max_acc" value="$(arg max_acc)" type="double"/>
+
+    <param name="optimization/algorithm" value="11" type="int"/>
+    <param name="optimization/max_iteration_num" value="100" type="int"/>
+    <param name="optimization/order" value="3" type="int"/>
+
+    <param name="bspline/limit_vel" value="$(arg max_vel)" type="double"/>
+    <param name="bspline/limit_acc" value="$(arg max_acc)" type="double"/>
+    <param name="bspline/limit_ratio" value="1.1" type="double"/>
+  
+  <!-- inflate map -->
+    <param name="global_map/inflate" value="0.38" type="double" />
+  </node>
+
+  <!-- trajectory server -->
+  <node pkg="robot_navigation" name="traj_server" type="traj_server" output="screen">
+
+  </node>
+
+</launch>

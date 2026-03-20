@@ -1,0 +1,27 @@
+<launch>
+  <!-- 底盘驱动：订阅 /cmd_vel（mux输出），发布各关节controller命令 -->
+  <node pkg="tri_steer_drive" type="tri_steer_drive_node.py" name="tri_steer_drive" output="screen">
+    <param name="cmd_topic" value="/cmd_vel"/>
+
+    <param name="wheel_radius" value="0.05"/>
+    <param name="R" value="0.20"/>
+
+    <!-- 轮子角度 -->
+    <param name="wheel1_deg" value="180.0"/>
+    <param name="wheel2_deg" value="-60.0"/>
+    <param name="wheel3_deg" value="60.0"/>
+   
+    <param name="invert_x" value="false"/>
+    <param name="invert_y" value="false"/>
+    <param name="invert_wz" value="false"/>
+
+    <!-- 你的controller话题名不一样就在这里改 -->
+    <param name="joint_steer_1" value="/joint11_position_controller/command"/>
+    <param name="joint_steer_2" value="/joint21_position_controller/command"/>
+    <param name="joint_steer_3" value="/joint31_position_controller/command"/>
+
+    <param name="joint_drive_1" value="/joint12_velocity_controller/command"/>
+    <param name="joint_drive_2" value="/joint22_velocity_controller/command"/>
+    <param name="joint_drive_3" value="/joint32_velocity_controller/command"/>
+  </node>
+</launch>

@@ -1,0 +1,20 @@
+<launch>
+  <!-- 与你现有的 DWA 启动方式一致：输出 /chassis_control，然后 remap 到 /cmd_vel_auto -->
+  <rosparam file="$(find robot_pid_local_planner)/config/omnidirectional_pid_param.yaml" command="load"/>
+
+  <node pkg="robot_pid_local_planner"
+        type="omnidirectional_pid_local_planner_node"
+        name="omnidirectional_pid_local_planner"
+        output="screen">
+
+
+
+    <!-- 保持与你的系统一致：局部规划输出 remap 到 /cmd_vel_auto -->
+  <!-- <remap from="/truth_pose_odom" to="/carto_odom"/> -->
+
+
+    <!-- 如果你系统里 DWA 用的就是这些名字，就不用改 -->
+    <!-- <remap from="/opt_path" to="/opt_path"/> -->
+    <!-- <remap from="/truth_pose_odom" to="/truth_pose_odom"/> -->
+  </node>
+</launch>

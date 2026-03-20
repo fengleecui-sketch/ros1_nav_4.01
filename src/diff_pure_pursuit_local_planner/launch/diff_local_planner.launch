@@ -1,0 +1,57 @@
+<launch>
+  <node pkg="diff_pure_pursuit_local_planner"
+        type="diff_pure_pursuit_node"
+        name="diff_pure_pursuit_local_planner"
+        output="screen">
+
+    <!-- inputs -->
+    <param name="topic_path" value="/opt_path"/>
+    <param name="topic_odom" value="/truth_pose_odom"/>
+    <param name="topic_map"  value="/local_map_esdf"/>
+
+    <!-- output -->
+    <param name="topic_cmd"  value="/chassis_control"/>
+    <remap from="/chassis_control" to="/cmd_vel_auto"/>
+
+    <!-- pure pursuit -->
+    <param name="lookahead_dist" value="4.0"/>
+    <param name="goal_tolerance" value="0.25"/>
+    <param name="max_v" value="0.8"/>
+    <param name="max_w" value="0.8"/>
+    <param name="min_v" value="0.05"/>
+    <!-- <param name="max_v" value="2.0"/>
+    <param name="max_w" value="1.57"/>
+    <param name="min_v" value="-2.0"/> -->
+    <param name="k_heading" value="1.8"/>
+    <param name="v_scale" value="1.0"/>
+
+    <!-- rate/timeouts -->
+    <param name="cmd_rate" value="30.0"/>
+    <param name="timeout_path" value="5.0"/>
+    <param name="timeout_odom" value="0.5"/>
+    <param name="timeout_map"  value="1.0"/>
+
+    <!-- avoidance -->
+    <param name="enable_avoid" value="true"/>
+    <param name="occ_threshold" value="95"/>
+    <param name="robot_radius" value="0.0"/>
+
+    <param name="sim_horizon" value="5.0"/>
+    <param name="sim_dt" value="0.02"/>
+    <param name="v_samples" value="8"/>
+    <param name="w_samples" value="15"/>
+
+    <param name="w_track" value="2.0"/>
+    <param name="w_obs" value="0.01"/>
+    <param name="w_smooth" value="0.2"/>
+
+    <!-- visualization -->
+    <param name="publish_rollouts" value="true"/>
+    <param name="max_rollout_markers" value="120"/>
+    <!-- 空字符串：自动使用 /local_map_esdf 的 frame_id；你也可以强制写 map/odom -->
+    <param name="viz_frame" value=""/>
+    <param name="rollout_line_width" value="0.03"/>
+    <param name="rollout_z" value="0.05"/>
+
+  </node>
+</launch>

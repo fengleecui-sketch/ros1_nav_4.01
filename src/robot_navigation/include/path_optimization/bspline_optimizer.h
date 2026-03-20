@@ -1,0 +1,116 @@
+#ifndef _BSPLINE_OPTIMIZER_H_
+#define _BSPLINE_OPTIMIZER_H_
+
+#include "iostream"
+#include <ros/ros.h>
+#include <nav_msgs/Path.h>
+#include "nav_msgs/Odometry.h"
+#include <Eigen/Eigen>
+
+#include "map_deal/edt_environment.h"
+
+using namespace std;
+using namespace Eigen;
+using namespace map_deal;
+
+// Gradient and elasitc band optimization
+
+// Input: a signed distance field and a sequence of points
+// Output: the optimized sequence of points
+// The format of points: N x 3 matrix, each row is a point
+namespace dyn_planner
+{
+class BsplineOptimizer
+{
+private:
+  EDTEnvironment::Ptr edt_env_;
+  Eigen::MatrixXd control_points_;  // nx3
+  Eigen::Vector2d end_pt_;
+  vector<tuple<int, int, Eigen::Vector2d>> ranges_;
+  bool use_guide_;
+
+  /* optimization parameters */
+  double lamda1_;             // curvature weight
+  double lamda2_;             // distance weight
+  double lamda3_;             // feasibility weight
+  double lamda4_;             // end point weight
+  double lamda5_;             // guide cost weight
+  double dist0_;              // safe distance
+  double dist1_;              // unsafe distance
+  double max_vel_, max_acc_;  // constrains parameters
+  int variable_num_;
+  int algorithm_;
+  int max_iteration_num_, iter_num_;
+  std::vector<double> best_variable_;
+  double min_cost_;
+  int start_id_, end_id_; // // 为了保证收尾的边界条件, 不对前后各p个控制点进行优化
+
+  /* bspline */
+  double bspline_interval_;  // ts
+  int order_;                // bspline order
+
+  int end_constrain_;
+  bool dynamic_;
+  double time_traj_start_;
+
+  int collision_type_;
+
+public:
+  BsplineOptimizer()
+  {
+  }
+  ~BsplineOptimizer()
+  {
+  }
+
+  enum END_CONSTRAINT
+  {
+    HARD_CONSTRAINT = 1,
+    SOFT_CONSTRAINT = 2
+  };
+
+  /* main API */
+  void setControlPoints(Eigen::MatrixXd points);
+  void setBSplineInterval(double ts);
+  void setEnvironment(const EDTEnvironment::Ptr& env);
+
+  void setParam(ros::NodeHandle& nh);
+  void setOptimizationRange(int start, int end);
+
+  void optimize(int end_cons, bool dynamic, double time_start = -1.0);
+  Eigen::MatrixXd getControlPoints();
+
+private:
+  /* NLopt cost */
+  static double costFunction(const std::vector<double>& x, std::vector<double>& grad, void* func_data);
+  /* helper function */
+  void getDistanceAndGradient(Eigen::Vector2d& pos, double& dist, Eigen::Vector2d& grad);
+
+  /* calculate each part of cost function with control points q */
+  void combineCost(const std::vector<double>& x, vector<double>& grad, double& cost);
+
+  void calcSmoothnessCost(const vector<Eigen::Vector2d>& q, double& cost, vector<Eigen::Vector2d>& gradient);
+  void calcDistanceCost(const vector<Eigen::Vector2d>& q, double& cost, vector<Eigen::Vector2d>& gradient);
+  void calcFeasibilityCost(const vector<Eigen::Vector2d>& q, double& cost, vector<Eigen::Vector2d>& gradient);
+  void calcEndpointCost(const vector<Eigen::Vector2d>& q, double& cost, vector<Eigen::Vector2d>& gradient);
+
+  void PublishPath(ros::Publisher pathPublish, std::vector<Eigen::Vector2d> path);
+public:
+  /* for evaluation */
+  vector<double> vec_cost_;
+  vector<double> vec_time_;
+  ros::Time time_start_;
+
+  ros::Publisher smoothPathpub;
+  ros::Publisher obstaclePathpub;
+
+  void getCostCurve(vector<double>& cost, vector<double>& time)
+  {
+    cost = vec_cost_;
+    time = vec_time_;
+  }
+
+  typedef shared_ptr<BsplineOptimizer> Ptr;
+};
+}  // namespace dyn_planner
+#endif

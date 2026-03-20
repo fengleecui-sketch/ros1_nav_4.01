@@ -1,0 +1,25 @@
+<launch>
+
+  <!-- 启动turtlebot3仿真机器人 -->
+  <!-- <include file="$(find turtlebot3_fake)/launch/turtlebot3_fake.launch" /> -->
+
+  <!-- <arg name="distance" default="euclidean"/> 　euclidean  manhattan -->
+  <arg name="weight_a" default="1.0"/>      
+  <arg name="weight_b" default="1.0"/>
+  <arg name="map_file" default="$(find robot_navigation)/maps/compete.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)">
+    <param name="frame_id" value="map"/>
+  </node>
+
+
+  <node name="rrt_node" pkg="robot_navigation" type="rrt_node" output="screen">
+    <param name="heuristic/distance" value="Euclidean"/>
+    <param name="weight/a" value="15.0"/>
+    <param name="weight/b" value="20.0"/>
+  </node>
+  <node pkg="tf" type="static_transform_publisher" name="odom_combined_broadcaster" args="0 0 0 0 0 0 /map /odom 100" />
+ 
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robot_navigation)/rviz/rrt.rviz"/>
+  
+</launch>
+

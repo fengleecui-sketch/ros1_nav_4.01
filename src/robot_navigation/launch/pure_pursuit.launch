@@ -1,0 +1,29 @@
+<launch>
+  <node name="pure_pursuit_node" pkg="robot_navigation" type="pure_pursuit_node" output="screen">
+    <!-- 车的长度 -->
+    <param name="control/car_length" value="0.6" type="double" />
+    <!-- 积分时间，和控制频率相关 -->
+    <param name="control/time" value="0.02" type="double" />
+    <!-- 设定车的最大速度 -->
+    <param name="control/max_vel" value="1.5" type="double" />
+    <!-- 设定车的最大加速度 -->
+    <param name="control/max_acc" value="1.0" type="double" />
+    <!-- 最大前探固定距离 -->
+    <param name="control/fix_distance" value="0.2" type="double" />
+    <!-- 多项式阶段数 -->
+    <param name="control/order" value="3" type="int" />
+    <!-- 设定地图分辨率 -->
+    <param name="control/map_resolution" value="0.05" type="double" />
+    <!-- 设定跟随速度的分辨率系数 -->
+    <param name="control/set_vel_k" value="1.0" type="double" />
+    <!-- 设定跟随角速度的分辨率系数 -->
+    <param name="control/set_yaw_k" value="1.0" type="double" />
+
+    <!-- 控制频率 -->
+    <param name="control/hz" value="50" type="int" />
+
+    <!-- 是否仿真 -->
+    <param name="control/is_use_sim" value="true" type="bool" />
+
+  </node>
+</launch>

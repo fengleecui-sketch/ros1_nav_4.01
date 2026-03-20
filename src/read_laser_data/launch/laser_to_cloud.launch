@@ -1,0 +1,11 @@
+<launch>
+  <!-- 启动节点 -->
+  <node name="laser1_to_cloud_node" pkg="read_laser_data" type="laser1_to_cloud_node" output="screen" >
+    <!-- 当前是否为仿真状态，仿真状态只有一个雷达，实际状态有两个雷达需要确认 -->
+    <param name="is_use_sim" value="true" type="bool" />
+
+    <!-- 激光雷达1rameid 名称 laser -->
+    <param name="laserFrame" type="string" value="laser" />
+  </node>
+</launch>
+

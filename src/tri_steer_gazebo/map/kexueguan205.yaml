@@ -1,0 +1,8 @@
+image: kexueguan205.pgm
+resolution: 0.050000
+# origin: [-22.024103, -27.066132, 0.000000]
+origin: [-21.724103, -25.906132, 0.000000]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+

@@ -1,0 +1,15 @@
+
+
+<launch>
+    <!-- true使用bag的时间戳 -->
+    <!-- false使用系统的时间戳 -->
+    <param name="use_sim_time" value="false" />
+
+    <!-- 启动节点 -->
+    <node name="laser_scan_node" pkg="read_laser_data" type="feature_detection_node" output="screen" >
+        <!-- 如果使用的是真正的雷达消息就是scan 如果是仿真的雷达就是laser_scan -->
+        <param name="laserType" type="string" value="scan" />
+    </node>
+    <!-- launch rviz 仿真用feature_sim.rviz 真正的雷达用feature_acl.rviz-->
+    <node name="rviz" pkg="rviz" type="rviz" required="false" args="-d $(find read_laser_data)/rviz/feature_acl.rviz" />
+</launch>

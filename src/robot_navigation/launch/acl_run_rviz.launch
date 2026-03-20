@@ -1,0 +1,6 @@
+<launch>
+  <!-- 启动rviz -->
+  <node name="rviz" pkg="rviz" type="rviz" required="true"
+      args="-d $(find robot_navigation)/rviz/nav_acl.rviz" />
+</launch>
+

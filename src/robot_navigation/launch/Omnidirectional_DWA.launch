@@ -1,0 +1,20 @@
+<launch>
+
+  <arg name="hz" default="20"/>
+  <arg name="robot_param" default="$(find robot_navigation)/config/omnidirectional_robot_param.yaml"/>
+  <arg name="dwa_param" default="$(find robot_navigation)/config/omnidirectional_dwa_param.yaml"/>
+
+  <node name="Omnidirectional_DWA_node" pkg="robot_navigation" type="Omnidirectional_DWA_node" output="screen">
+    <rosparam command="load" file="$(arg robot_param)"/>
+    <rosparam command="load" file="$(arg dwa_param)"/>
+    <param name="HZ" value="$(arg hz)"/>
+    <!-- 是否使用的是ESDF地图还是原本算法计算安全代价的方式 -->
+    <param name="IS_USE_ESDF" value="true" type="bool" />
+    <!-- 是仿真还是实车 -->
+    <param name="IS_SIM" value="true" type="bool" />
+
+    <remap from="/chassis_control" to="/cmd_vel_auto"/>
+
+  </node>
+  
+</launch>

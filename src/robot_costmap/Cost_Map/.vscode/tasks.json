@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"options": {
+		"cwd": "${workspaceFolder}/build"    //需要进入到我们执行tasks任务的文件夹中
+	},
+	"tasks": [    //tasks包含三个小任务
+		{
+			"type": "shell",
+			"label": "cmake",    //第一个任务的名字叫cmake
+			"command": "cmake",    //它要执行的命令是cmake
+			"args": [
+				".."    //参数是..
+			]
+		},
+		{
+			"label": "make",    //第一个任务的名字叫cmake
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"command": "make",    //它要执行的命令是make
+			"args": [
+				
+			]
+		},
+		{
+			"label": "Build",    //第三个任务的名字叫Build
+			"dependsOrder": "sequence",    //顺序执行依赖项
+			"dependsOn":[    //依赖的两个项为cmake和make
+				"cmake",    //即第一个任务的label
+				"make"      //即第二个任务的label
+			]
+		}
+	]
+}

@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="carto_tf_to_odom"
+        type="carto_tf_to_odom_sim_node"
+        name="carto_tf_to_odom"
+        output="screen">
+  </node>
+</launch>

@@ -1,0 +1,8 @@
+{
+    "uartParam":
+    {
+        "passWord":"yg",
+        "usbUsart":"/dev/ttyUSB0",
+        "isDisplay":1
+    }
+}

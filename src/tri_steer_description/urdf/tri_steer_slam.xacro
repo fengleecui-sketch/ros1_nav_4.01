@@ -1,0 +1,736 @@
+<?xml version="1.0"?>
+<robot name="tri_steer" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ========== 参数 ========== -->
+  <xacro:property name="wheel_radius" value="0.05"/>
+  <xacro:property name="body_radius" value="0.05"/>
+  <xacro:property name="body_height" value="0.05"/>
+
+  <xacro:property name="wheel_damping" value="0.0001"/>
+  <xacro:property name="wheel_friction" value="0.0001"/>
+
+  <xacro:property name="wheel_effot" value="300"/>
+  <xacro:property name="wheel_velocity" value="20"/>
+
+  <xacro:property name="turn_effot" value="300"/>
+  <xacro:property name="turn_velocity" value="10"/>
+
+  <xacro:property name="pos_wheel_z" value="-0.045"/>
+  
+  <xacro:property name="turn_radius" value="0.1"/>
+  <xacro:property name="turn_height" value="0.01"/> 
+
+  <xacro:property name="lift_radius" value="0.1"/>
+  <xacro:property name="lift_height" value="0.02"/>
+
+  <!-- ========== base ========== -->
+  <link name="base_footprint"/> 
+
+
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0.008137 -0.0019645 -0.0037906"
+        rpy="0 0 0" />
+      <mass
+        value="5.0701" />
+      <inertia
+        ixx="0.056129"
+        ixy="-0.00012401"
+        ixz="-5.0766E-05"
+        iyy="0.054858"
+        iyz="5.3268E-05"
+        izz="0.10521" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+       <cylinder radius="${turn_radius}" length="${turn_height}"/>
+       </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_link_joint" type="fixed">
+    <origin xyz="0 0 0.2" rpy="0 0 0"/>
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+  </joint> 
+
+  <!-- 舵轮 1 -->
+  <link
+    name="turn1">
+    <inertial>
+      <origin
+        xyz="-8.1365E-05 0.00049252 0.088662"
+        rpy="0 0 0" />
+      <mass
+        value="3.2924" />
+      <inertia
+        ixx="0.006991"
+        ixy="-0.00016006"
+        ixz="-1.731E-06"
+        iyy="0.0076006"
+        iyz="4.8359E-06"
+        izz="0.012782" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/turn1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+  <origin xyz="0 0 0.05" rpy="0 0 0"/>
+  <geometry><cylinder radius="${turn_radius}" length="${turn_height}"/></geometry>
+  </collision>
+  </link>
+<joint
+    name="joint11"
+    type="continuous">
+    <origin
+      xyz="-0.35334 0 -0.055357"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="turn1" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="${wheel_damping}" friction="${wheel_friction}"/>
+    <limit effort="${turn_effot}" velocity="${turn_velocity}"/>
+  </joint>
+  
+   <link
+    name="wheel1">
+    <inertial>
+      <origin
+        xyz="-2.9476E-14 -0.043943 3.5416E-14"
+        rpy="0 0 0" />
+      <mass
+        value="0.28016" />
+      <inertia
+        ixx="0.00022144"
+        ixy="2.6268E-18"
+        ixz="2.7544E-19"
+        iyy="0.00034522"
+        iyz="-3.6931E-17"
+        izz="0.00022144" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/wheel1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 -0.045 0"
+        rpy="0 0 0" />
+      <geometry>
+       <sphere radius= "${wheel_radius}"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint12"
+    type="continuous">
+    <origin
+      xyz="0 0.045 -0.045"
+      rpy="0 0 0" />
+    <parent
+      link="turn1" />
+    <child
+      link="wheel1" />
+    <axis
+      xyz="0 1 0" />
+    <dynamics damping="${wheel_damping}" friction="${wheel_friction}" />
+    <limit effort="${wheel_effot}" velocity="${wheel_velocity}" />  
+  </joint>
+
+ <link
+    name="lift1">
+    <inertial>
+      <origin
+        xyz="-0.00026898 0.0001523 -0.026187"
+        rpy="0 0 0" />
+      <mass
+        value="0.54659" />
+      <inertia
+        ixx="0.0014575"
+        ixy="-5.8921E-08"
+        ixz="-1.1592E-07"
+        iyy="0.0014564"
+        iyz="6.7896E-07"
+        izz="0.0026981" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/lift1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <geometry><cylinder radius="${lift_radius}" length="${lift_height}"/></geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint13"
+    type="prismatic">
+    <origin
+      xyz="0 0 0.201"
+      rpy="0 0 0" />
+    <parent
+      link="turn1" />
+    <child
+      link="lift1" />
+    <axis
+      xyz="0 0 1" />
+  <dynamics damping="0.2" friction="0.1"/>
+  <limit lower="0" upper="0.05" effort="2000" velocity="0.1"/>
+
+  </joint>
+
+
+  <!-- 舵轮 2 -->
+  <link
+    name="turn2">
+    <inertial>
+      <origin
+        xyz="-8.1358E-05 0.0004925 0.088662"
+        rpy="0 0 0" />
+      <mass
+        value="3.2924" />
+      <inertia
+        ixx="0.006991"
+        ixy="-0.00016006"
+        ixz="-1.731E-06"
+        iyy="0.0076006"
+        iyz="4.8359E-06"
+        izz="0.012782" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/turn2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+  <collision>
+  <origin xyz="0 0 0.05" rpy="0 0 0"/>
+  <geometry><cylinder radius="${turn_radius}" length="${turn_height}"/></geometry>
+  </collision>
+
+  </link>
+  <joint
+    name="joint21"
+    type="continuous">
+    <origin
+      xyz="0.17667 0.306 -0.055357"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="turn2" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="${wheel_damping}" friction="${wheel_friction}"/>
+    <limit effort="${turn_effot}" velocity="${turn_velocity}"/>
+  </joint>
+
+<link
+    name="wheel2">
+    <inertial>
+      <origin
+        xyz="8.3822E-15 -0.046057 -1.0977E-14"
+        rpy="0 0 0" />
+      <mass
+        value="0.28016" />
+      <inertia
+        ixx="0.00022144"
+        ixy="2.419E-19"
+        ixz="4.5831E-19"
+        iyy="0.00034522"
+        iyz="-7.1227E-17"
+        izz="0.00022144" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/wheel2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 -0.045 0"
+        rpy="0 0 0" />
+      <geometry>
+       <sphere radius= "${wheel_radius}"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint22"
+    type="continuous">
+    <origin
+      xyz="0 0.045 -0.045"
+      rpy="0 0 0" />
+    <parent
+      link="turn2" />
+    <child
+      link="wheel2" />
+    <axis
+      xyz="0 1 0" />
+    <dynamics damping="${wheel_damping}" friction="${wheel_friction}"/>
+    <limit effort="${wheel_effot}" velocity="${wheel_velocity}"/>
+  </joint>
+
+ <link
+    name="lift2">
+    <inertial>
+      <origin
+        xyz="-0.00017636 0.00025402 -0.026187"
+        rpy="0 0 0" />
+      <mass
+        value="0.54658" />
+      <inertia
+        ixx="0.0014573"
+        ixy="-4.7272E-07"
+        ixz="1.8988E-07"
+        iyy="0.0014566"
+        iyz="6.7451E-07"
+        izz="0.0026981" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/lift2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <geometry><cylinder radius="${lift_radius}" length="${lift_height}"/></geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint23"
+    type="prismatic">
+    <origin
+      xyz="0 0 0.201"
+      rpy="0 0 0" />
+    <parent
+      link="turn2" />
+    <child
+      link="lift2" />
+    <axis
+      xyz="0 0 1" />
+  <dynamics damping="0.2" friction="0.1"/>
+  <limit lower="0" upper="0.05" effort="2000" velocity="0.1"/>
+
+  </joint>
+
+<!-- 舵轮 3-->
+<link
+    name="turn3">
+      <inertial>
+      <origin
+        xyz="-8.1358E-05 0.0004925 0.088662"
+        rpy="0 0 0" />
+      <mass
+        value="3.2924" />
+      <inertia
+        ixx="0.006991"
+        ixy="-0.00016006"
+        ixz="-1.731E-06"
+        iyy="0.0076006"
+        iyz="4.8359E-06"
+        izz="0.012782" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/turn3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="1 1 1 1" />
+      </material>
+    </visual>
+  <collision>
+  <origin xyz="0 0 0.05" rpy="0 0 0"/>
+  <geometry><cylinder radius="${turn_radius}" length="${turn_height}"/></geometry>
+  </collision>
+  </link>
+
+  <joint
+    name="joint31"
+    type="continuous">
+    <origin
+      xyz="0.17667 -0.306 -0.055357"
+      rpy="0 0 0" />
+    <parent
+      link="base_link" />
+    <child
+      link="turn3" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="${wheel_damping}" friction="${wheel_friction}"/>
+    <limit effort="${turn_effot}" velocity="${turn_velocity}"/>
+  </joint>
+
+<link
+    name="wheel3">
+    <inertial>
+      <origin
+        xyz="5.3291E-15 0.043943 -1.1433E-13"
+        rpy="0 0 0" />
+      <mass
+        value="0.28016" />
+      <inertia
+        ixx="0.00022144"
+        ixy="-4.9652E-20"
+        ixz="4.2165E-19"
+        iyy="0.00034522"
+        iyz="-5.746E-17"
+        izz="0.00022144" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/wheel3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0.045 0"
+        rpy="0 0 0" />
+      <geometry>
+       <sphere radius= "${wheel_radius}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint
+    name="joint32"
+    type="continuous">
+    <origin
+      xyz="0 -0.045 -0.045"
+      rpy="0 0 0" />
+    <parent
+      link="turn3" />
+    <child
+      link="wheel3" />
+    <axis
+      xyz="0 1 0" />
+    <dynamics damping="${wheel_damping}" friction="${wheel_friction}"/>
+    <limit effort="${wheel_effot}" velocity="${wheel_velocity}"/>
+  </joint>
+
+ <link
+    name="lift3">
+    <inertial>
+      <origin
+        xyz="-0.0001763 0.00025409 -0.026187"
+        rpy="0 0 0" />
+      <mass
+        value="0.54658" />
+      <inertia
+        ixx="0.0014573"
+        ixy="-4.7272E-07"
+        ixz="1.8988E-07"
+        iyy="0.0014566"
+        iyz="6.7451E-07"
+        izz="0.0026981" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://tri_steer_description/meshes2/lift3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+      <geometry><cylinder radius="${lift_radius}" length="${lift_height}"/></geometry>
+    </collision>
+  </link>
+  <joint
+    name="joint33"
+    type="prismatic">
+    <origin
+      xyz="0 0 0.201"
+      rpy="0 0 0" />
+    <parent
+      link="turn3" />
+    <child
+      link="lift3" />
+    <axis
+      xyz="0 0 1" />
+    <dynamics damping="0.2" friction="0.1"/>
+    <limit lower="0" upper="0.05" effort="2000" velocity="0.1"/>
+  </joint>
+
+  <!-- ========== 激光雷达 link（用于 TF 和外观）========== -->
+  <link name="laser">
+    <inertial>
+      <mass value="0.1"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="1e-4" ixy="0" ixz="0" iyy="1e-4" iyz="0" izz="1e-4"/>
+    </inertial>
+
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.03" length="0.05"/>
+      </geometry>
+      <material name="Gray">
+        <color rgba="0.6 0.6 0.6 1"/>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.03" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- laser 固定到 base_link 上（根据你雷达实际安装位置改 xyz） -->
+  <joint name="laser_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="laser"/>
+    <!-- 例：雷达在车体前方 0.20m，高 0.12m -->
+    <origin xyz="0.0 0 0.3" rpy="0 0 0"/>
+    <!-- <origin xyz="0.0 0.5 0.0" rpy="0 0 0"/> -->
+    <!-- <origin xyz="0.0 0.5 0.0" rpy="1.5708 0 0"/> -->
+  </joint>
+
+    <!-- Gazebo friction for wheel -->
+    <gazebo reference="wheel1">
+      <mu1>250</mu1>
+      <mu2>250</mu2>
+      <kp>200000</kp>
+      <kd>1200</kd>
+      <material>Gazebo/Black</material>
+    </gazebo>
+
+    <gazebo reference="wheel2">
+      <mu1>250</mu1>
+      <mu2>250</mu2>
+      <kp>200000</kp>
+      <kd>1200</kd>
+      <material>Gazebo/Black</material>
+    </gazebo>
+
+    <gazebo reference="wheel3">
+      <mu1>250</mu1>
+      <mu2>250</mu2>
+      <kp>200000</kp>
+      <kd>1200</kd> 
+      <material>Gazebo/Black</material>
+    </gazebo>
+
+
+    <gazebo reference="turn1">
+      <material>Gazebo/Green</material>
+    </gazebo>
+
+    <gazebo reference="turn2">
+      <material>Gazebo/Green</material>
+    </gazebo>
+
+  <gazebo reference="turn3">
+      <material>Gazebo/Green</material>
+    </gazebo>
+
+
+  <!-- ===== transmissions for tri_steer ros_control ===== -->
+
+  <!-- steer joints: Position -->
+  <transmission name="steer_1_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint11">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="steer_1_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="steer_2_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint21">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="steer_2_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="steer_3_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint31">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="steer_3_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <!-- wheel joints: Velocity -->
+  <transmission name="wheel_1_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint12">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="wheel_1_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="wheel_2_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint22">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="wheel_2_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="wheel_3_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint32">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="wheel_3_motor">
+      <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+
+  <!-- lift joints: Position (如果你要控升降就保留；暂时不用也可以先不启 controller) -->
+  <transmission name="lift_1_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint13">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="lift_1_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="lift_2_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint23">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="lift_2_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+
+  <transmission name="lift_3_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="joint33">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="lift_3_motor">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  
+</robot>

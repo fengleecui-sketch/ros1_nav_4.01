@@ -1,0 +1,53 @@
+# ===== 最简 PID 局部规划器参数（与 DWA 接口一致） =====
+IS_SIM: false
+
+# 前瞻距离（米）：越大越平滑，但转弯会切角；越小越“贴路径”但更抖
+LOOKAHEAD_DIST: 0.6
+
+# 到终点认为到达（米）
+GOAL_TOL: 0.05
+
+# 控制输出限幅（单位：m/s, rad/s）
+MAX_VX: 0.40
+MAX_VY: 0.40
+MAX_WZ: 0.80
+
+# PID（建议先只用 P，I/D 先为 0）
+KP_X: 0.9
+KI_X: 0.0
+KD_X: 0.0
+
+KP_Y: 0.9
+KI_Y: 0.0
+KD_Y: 0.0
+
+KP_YAW: 1.2
+KI_YAW: 0.0
+KD_YAW: 0.0
+
+# 防积分饱和
+I_LIMIT_X: 0.6
+I_LIMIT_Y: 0.6
+I_LIMIT_YAW: 1.0
+
+# cmd_vel 超时（秒）：超过则立刻刹停
+CMD_TIMEOUT: 0.5
+
+# 发布频率（Hz）
+PUB_HZ: 30.0
+
+# ===== 到达终点后的行为（关键） =====
+# true：到达终点后进入 IDLE（锁存），即使你用键盘把车挪开，也不会被拉回终点
+IDLE_LATCH_ON_REACHED: true
+
+# IDLE 时是否持续发布 0
+# 建议 true：这样手动松开键盘后，mux 切回 auto 也只会停住，不会又跟踪回终点
+PUBLISH_ZERO_WHEN_IDLE: true
+
+# 到达判定是否要求速度接近 0（更稳，避免刚进阈值又被惯性/噪声带出去）
+USE_SPEED_CHECK: true
+STOP_V_TOL: 0.03   # m/s
+STOP_W_TOL: 0.05   # rad/s
+
+# 判断“新路径”的末点变化阈值（用于解除 IDLE）
+NEW_PATH_EPS: 0.02

@@ -1,0 +1,16 @@
+<launch>
+
+  <arg name="hz" default="20"/>
+  <arg name="use_scan_as_input" default="false"/>
+  <arg name="robot_param" default="$(find robot_navigation)/config/differential_robot_param.yaml"/>
+  <arg name="dwa_param" default="$(find robot_navigation)/config/differential_dwa_param.yaml"/>
+
+  <node name="Differential_DWA_node" pkg="robot_navigation" type="Differential_DWA_node" output="screen">
+    <rosparam command="load" file="$(arg robot_param)"/>
+    <rosparam command="load" file="$(arg dwa_param)"/>
+    <param name="HZ" value="$(arg hz)"/>
+
+    
+  </node>
+  
+</launch>

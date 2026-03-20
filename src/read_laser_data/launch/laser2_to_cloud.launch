@@ -1,0 +1,20 @@
+<launch>
+  <!-- 启动节点 -->
+  <node name="laser2_to_cloud_node" pkg="read_laser_data" type="laser2_to_cloud_node" output="screen" >  
+    <!-- 激光雷达frameid 名称 laser2 -->
+    <param name="laserFrame" type="string" value="laser2" />
+
+    <!-- 激光雷达安装的几何位置，因为需要对雷达和车体进行左边变换 -->
+    <!-- 该节点最终输出的点云信息是相对于车本身的点云信息 -->
+    <!-- 雷达安装的x y z方向的位置 -->
+    <param name="laser_x" type="double" value="-0.117"/>
+    <param name="laser_y" type="double" value="-0.159"/>
+    <param name="laser_z" type="double" value="0.15"/>
+
+    <!-- 雷达安装的欧拉角 数值范围 -pi到pi -->
+    <param name="laser_roll" type="double" value="0.0"/>
+    <param name="laser_pitch" type="double" value="0.0"/>
+    <param name="laser_yaw" type="double" value="-2.355"/>    
+  </node> 
+</launch>
+

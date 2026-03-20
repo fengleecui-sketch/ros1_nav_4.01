@@ -1,0 +1,102 @@
+<launch>
+  <arg name="max_vel" value="2.0" />
+  <arg name="max_acc" value="1.0" />
+  <arg name="dynamic" value="0" />
+
+  <arg name="navigation_param" default="$(find robot_navigation)/config/navigation_param.yaml"/>
+
+  <node name="motionPlan_node" pkg="robot_navigation" type="motionPlan_node" output="screen">
+    <!-- 是否进行仿真 -->
+    <param name="motion_node/is_sim" value="false" type="bool" />
+    <!-- 是否进行巡航，巡航按照固定路径进行搜索，不巡航就是人为给点 -->
+    <param name="motion_node/is_cruise" value="false" type="bool" />
+    <!-- 规划使用哪种算法 -->
+    <!-- 1是astar规划  2是Hybrid astar规划 3是JPS规划 4是RRT*规划-->
+    <param name="motion_plan/control_method" value="1" type="int" />
+    
+    <!-- 规划运行的频率 -->
+    <param name="motion_plan/control_hz" value="10" type="int" />
+
+    <!-- 停车的margin范围，不要小于地图的分辨率 -->
+    <param name="motion_plan/stop_margin" value="0.5" type="double" />
+
+    <rosparam command="load" file="$(arg navigation_param)"/>
+    <!-- //0 1 2 3方法 欧氏距离 曼哈顿 切比学夫 对角线 -->
+    <param name="astar_heuristic/distance" value="3"/>
+    <param name="astar_glength/distance" value="3"/>
+    <param name="astar_weight/g" value="1.0"/>
+    <param name="astar_weight/h" value="1.0"/>
+    <param name="astar_search/radius" value="200.0"/>
+
+    <param name="jps_heuristic/distance" value="3"/>
+    <param name="jps_glength/distance" value="3"/>
+    <param name="jps_weight/g" value="1.0"/>
+    <param name="jps_weight/h" value="3.0"/>
+    <param name="jps_search/radius" value="60.0"/>
+    <param name="jps_search/is_use_esdf" value="false" type="bool"/>
+
+    <!-- 设定起点位置 -->
+    <param name="planning/start_x" value="0.0"/>    
+    <param name="planning/start_y" value="0.0"/>  
+
+    <!-- 设置minimum_snap的参数 -->
+    <param name="minimum_snap/max_vel" value="3.0"/>    <!-- 最大速度限制 -->
+    <param name="minimum_snap/max_acce" value="3.0"/>    <!-- 最大加速度限制 -->
+    <!-- 多项式阶数 1阶是速度  2阶是加速度  3阶是jerk  4阶是snap -->
+    <param name="minimum_snap/order" value="3"/>        <!-- 多项式阶数 -->
+
+    <!-- 设置bezier的参数 -->
+    <param name="bezier_curve/sub" value="3"/>    <!-- 贝塞尔曲线阶数 -->
+    <param name="bezier_curve/max_vel" value="3.0"/>    <!-- 最大加速度限制 -->
+    <param name="bezier_curve/time_resolution" value="0.01"/>        <!-- 时间分辨率 -->
+
+    <!-- 导入pid控制参数 -->
+    <rosparam file="$(find robot_navigation)/config/pid_param.yaml" command="load"/>
+
+    <!-- hybrid astar参数设定 -->
+    <param name="search/max_tau" value="0.8" type="double"/>
+    <param name="search/init_max_tau" value="0.8" type="double"/>
+    <param name="search/max_vel" value="2.0" type="double"/>
+    <param name="search/max_acc" value="2.0" type="double"/>
+    <param name="search/w_time" value="15.0" type="double"/>
+    <param name="search/horizon" value="50.0" type="double"/>
+    <param name="search/lambda_heu" value="5.0" type="double"/>
+    <param name="search/resolution_astar" value="0.1" type="double"/>
+    <param name="search/time_resolution" value="0.8" type="double"/>
+    <param name="search/margin" value="0.2" type="double"/>
+    <param name="search/allocate_num" value="100000" type="int"/>
+    <param name="search/check_num" value="5" type="int"/>
+    <param name="search/is_use_esdf" value="false" type="bool"/>
+
+    <!-- fast security的参数设定 -->
+    <!-- 最小按照实车半径0.3去给,这里保守一点给2.0 扩展栅格数目是search_length/resolution-->
+    <param name="Fast_security/search_length" value="2.0" type="double"/>
+    <!-- 获取连续部分走廊系数 距离场系数 -->
+    <param name="Fast_security/Kcontinu_esdf" value="1.0" type="double"/>
+    <!-- 获取连续部分走廊系数 到上一个点距离代价系数 -->
+    <param name="Fast_security/Kcontinu_ldis" value="0.0" type="double"/>
+    <!-- 获取连续部分走廊系数 到终点部分距离代价系数 -->
+    <param name="Fast_security/Kcontinu_edis" value="1.0" type="double"/>
+    <!-- 获取间断部分走廊系数 距离场系数 -->
+    <param name="Fast_security/Kinterru_esdf" value="1.0" type="double"/>
+    <!-- 获取间断部分走廊系数 到上一个点距离代价系数 -->
+    <param name="Fast_security/Kinterru_ldis" value="0.0" type="double"/>
+    <!-- 获取间断部分走廊系数 到终点部分距离代价系数 -->
+    <param name="Fast_security/Kinterru_edis" value="1.0" type="double"/>
+    <!-- 获取间断部分走廊系数 重合点系数 -->
+    <param name="Fast_security/Kinterru_rep" value="0.0" type="double"/>
+    <!-- 获取阶梯部分走廊系数 距离场系数 -->
+    <param name="Fast_security/Kstep_esdf" value="1.0" type="double"/>
+    <!-- 获取阶梯部分走廊系数 到上一个点距离代价系数 -->
+    <param name="Fast_security/Kstep_ldis" value="0.0" type="double"/>
+    <!-- 获取阶梯部分走廊系数 到终点部分距离代价系数 -->
+    <param name="Fast_security/Kstep_edis" value="1.0" type="double"/>
+    <!-- 获取阶梯部分走廊系数 重合点系数 -->
+    <param name="Fast_security/Kstep_rep" value="0.0" type="double"/>
+
+    <!-- frame_name id名称 -->
+    <param name="motion_plan/frame_id" value="map" type="string" />
+  </node>
+  
+</launch>
+

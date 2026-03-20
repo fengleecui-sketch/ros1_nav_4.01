@@ -1,0 +1,8 @@
+<launch>
+  <!-- 开启串口通讯节点 -->
+  <node name="usart_node" pkg="robot_usart" type="usart_node" output="screen">
+    <!-- 判断是否使用的全局速度控制 1是使用全局速度 2是使用直接的速度控制 -->
+    <param name="usart_node/use_global" value="false" type="bool" />
+  </node>
+  
+</launch>

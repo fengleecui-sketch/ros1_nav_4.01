@@ -1,0 +1,10 @@
+
+
+<launch>
+  <!-- 启动 odom_calibra_pcl 节点 -->
+  <node name="odom_calibra_pcl_node"
+      pkg="robot_locatization" type="odom_calibra_pcl_node" output="screen" >
+      <!-- <rosparam file="$(find lesson3)/config/plicp_odometry.yaml" command="load"/> -->
+  </node>
+
+</launch>

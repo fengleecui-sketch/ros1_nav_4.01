@@ -1,0 +1,723 @@
+#if 0
+      // 定义采样点 路径点的位置信息和每个点的速度信息
+      double ts = pp_.ctrl_pt_dist / pp_.max_vel_;
+      // 获取位置和开始到终点的速度点
+      vector<Eigen::Vector2d> point_set,start_end_derivatives;
+      // 获取采样点
+      hybrid_astar_finder->getSamples(ts,point_set,start_end_derivatives);
+
+      // 定义控制点矩阵
+      Eigen::MatrixXd ctrl_pts;
+      // 将控制点转换成B样条所需要的曲线
+      nuBspline->parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
+      // 对B样条初始化
+      nuBspline->setUniformBspline(ctrl_pts, 3, ts);
+
+      t1 = ros::Time::now();
+
+      // // 正常模式
+      int cost_function = BsplineOptimizer::NORMAL_PHASE;
+
+      // 如果没有到达终点
+      if(status != Hybrid_astar::REACH_END){
+        cost_function |= BsplineOptimizer::ENDPOINT;
+      }
+      // B样条优化跟随路径
+      ctrl_pts = bspline_optimizers_[0]->BsplineOptimizeTraj(ctrl_pts, ts, cost_function, 1, 1);
+      
+      // 获取优化时间
+      t_opt = (ros::Time::now() - t1).toSec();
+
+      t1                    = ros::Time::now();
+      NonUniformBspline pos = NonUniformBspline(ctrl_pts, 3, ts);
+
+      double to = pos.getTimeSum();
+      pos.setPhysicalLimits(pp_.max_vel_, pp_.max_acc_);
+      // 可行性验证
+      bool feasible = pos.checkFeasibility(false);
+
+      int iter_num = 0;
+      while (!feasible && ros::ok()) {
+
+        feasible = pos.reallocateTime();
+
+        if (++iter_num >= 3) break;
+      }
+
+      // 获取总的时间
+      double tn = pos.getTimeSum();
+
+      cout << "[kino replan]: Reallocate ratio: " << tn / to << endl;
+      if (tn / to > 3.0) ROS_ERROR("reallocate error.");
+
+      t_adjust = (ros::Time::now() - t1).toSec();
+      // save planned results
+      // 保存规划结果
+      local_data_.position_traj_ = pos;
+
+      double t_total = t_search + t_opt + t_adjust;
+      cout << "[kino replan]: time: " << t_total << ", search: " << t_search << ", optimize: " << t_opt
+          << ", adjust time:" << t_adjust << endl;
+
+      pp_.time_search_   = t_search;
+      pp_.time_optimize_ = t_opt;
+      pp_.time_adjust_   = t_adjust;      
+
+      updateTrajInfo();
+
+      plan_flag = true;   //规划成功
+
+      cout<<"plan_flag:"<<plan_flag<<endl;
+      if(plan_flag)
+      {
+        // 对yaw进行规划
+        planYaw(start_yaw_);
+
+        // 获取局部消息
+        auto info = &local_data_;
+
+        // 发布B样条曲线
+        plan_manage::Bspline bspline;
+        bspline.order = 3;
+        bspline.start_time = info->start_time_;
+        bspline.traj_id = info->traj_id_; 
+
+        Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
+        
+        // 
+        for (int i = 0; i < pos_pts.rows(); ++i) {
+          geometry_msgs::Point pt;
+          pt.x = pos_pts(i, 0);
+          pt.y = pos_pts(i, 1);
+          pt.z = pos_pts(i, 2);
+          bspline.pos_pts.push_back(pt);
+        }
+
+        // 获取关键节点
+        Eigen::VectorXd knots = info->position_traj_.getKnot();
+        for (int i = 0; i < knots.rows(); ++i) {
+          bspline.knots.push_back(knots(i));
+        }
+
+        // 获取yaw轴的关键控制节点
+        Eigen::MatrixXd yaw_pts = info->yaw_traj_.getControlPoint();
+        for (int i = 0; i < yaw_pts.rows(); ++i) {
+          double yaw = yaw_pts(i, 0);
+          bspline.yaw_pts.push_back(yaw);
+        }
+        // 获取yaw轴的时间
+        bspline.yaw_dt = info->yaw_traj_.getInterval();   
+
+        // 获取原来规划的路径
+        auto plan_data = &plan_data_;  
+        bspPathPub.publish(bspline);
+        
+        // 进行轨迹跟随
+        Eigen::MatrixXd pos_pts2(bspline.pos_pts.size(), 3);
+
+        Eigen::VectorXd knots2(bspline.knots.size());
+        for (int i = 0; i < bspline.knots.size(); ++i) {
+          knots2(i) = bspline.knots[i];
+        }
+
+        for (int i = 0; i < bspline.pos_pts.size(); ++i) {
+          pos_pts2(i, 0) = bspline.pos_pts[i].x;
+          pos_pts2(i, 1) = bspline.pos_pts[i].y;
+          pos_pts2(i, 2) = bspline.pos_pts[i].z;
+        }
+
+        NonUniformBspline pos_traj(pos_pts2, bspline.order, 0.1);
+        pos_traj.setKnot(knots2);
+
+        // 获取yaw轴的跟随
+        Eigen::MatrixXd yaw_pts2(bspline.yaw_pts.size(), 1);
+        for (int i = 0; i < bspline.yaw_pts.size(); ++i) {
+          yaw_pts2(i, 0) = bspline.yaw_pts[i];
+        }
+        NonUniformBspline yaw_traj(yaw_pts2, bspline.order, bspline.yaw_dt);
+
+        start_time_ = bspline.start_time;
+       
+        /* 获取控制信息 */
+        traj_.push_back(pos_traj);
+        traj_.push_back(traj_[0].getDerivative());
+        traj_.push_back(traj_[1].getDerivative());
+        traj_.push_back(yaw_traj);
+        traj_.push_back(yaw_traj.getDerivative());
+
+        traj_duration_ = traj_[0].getTimeSum();
+
+        ros::Time time_now = ros::Time::now();
+        double t_cur = (time_now - start_time_).toSec();
+
+        Eigen::Vector3d pos, vel, acc, pos_f;
+        double yaw, yawdot;
+
+        cout<<"traj_duration_:"<<traj_duration_<<endl;
+        cout<<"t_cur"<<traj_duration_<<endl;
+
+        // 对各个点的速度数据进行处理
+        // if (t_cur < traj_duration_ && t_cur >= 0.0) 
+        if(pow(abs(startPoint[0]-endPoint[0]),2)+pow(abs(startPoint[1]-endPoint[1]),2)>0.01)
+        {
+          pos = traj_[0].evaluateDeBoorT(t_cur);
+          vel = traj_[1].evaluateDeBoorT(t_cur);
+          acc = traj_[2].evaluateDeBoorT(t_cur);
+          yaw = traj_[3].evaluateDeBoorT(t_cur)[0];
+          yawdot = traj_[4].evaluateDeBoorT(t_cur)[0];
+
+          double tf = min(traj_duration_, t_cur + 2.0);
+          pos_f = traj_[0].evaluateDeBoorT(tf);
+
+        } //else if (t_cur > traj_duration_) 
+        else
+        {
+          /* hover when finish traj_ */
+          pos = traj_[0].evaluateDeBoorT(traj_duration_);
+          // 速度归0
+          vel.setZero();
+          // 加速度归0
+          acc.setZero();
+          yaw = traj_[3].evaluateDeBoorT(traj_duration_)[0];
+          yawdot = traj_[4].evaluateDeBoorT(traj_duration_)[0];
+
+          pos_f = pos;
+
+        }
+
+        // pidFollow.gyro_pid.SetPoint = -yaw;
+        // pidFollow.gyro_pid.feedPoint = nowYaw;
+        // pidFollow.PIDFloatPositionCal(&pidFollow.gyro_pid);
+
+        // 计算角速度
+        // my_twist.angular.z = pidFollow.gyro_pid.OutPoint;
+        my_twist.linear.x = vel(0);
+        my_twist.linear.y = vel(1);  
+        
+        cout<<"x speed:"<<my_twist.linear.x<<endl;
+        cout<<"y speed:"<<my_twist.linear.y<<endl;
+        // cout<<"set yaw:"<<pidFollow.gyro_pid.SetPoint<<endl;
+        // cout<<"feed yaw:"<<pidFollow.gyro_pid.feedPoint<<endl;
+
+        chassCtlPub.publish(my_twist);
+      }
+#endif
+
+
+private:
+  enum FSM_EXEC_STATE { INIT, WAIT_TARGET, GEN_NEW_TRAJ, REPLAN_TRAJ, EXEC_TRAJ, REPLAN_NEW };
+  enum TARGET_TYPE { MANUAL_TARGET = 1, PRESET_TARGET = 2, REFENCE_PATH = 3 };
+
+  bool trigger_, have_target_, have_odom_;
+  FSM_EXEC_STATE exec_state_;
+  double no_replan_thresh_, replan_thresh_;
+
+  PlanParameters pp_; // 规划参数定义
+  LocalTrajData local_data_;
+  MidPlanData plan_data_;
+  
+  Eigen::Vector3d start_pt_, start_vel_, start_acc_ ;  // start state
+  Eigen::Vector3d start_yaw_;
+  Eigen::Vector3d end_pt_, end_vel_;                              // target state
+
+  NonUniformBspline * nuBspline = new NonUniformBspline();
+  BsplineOptimizer * optBspline = new BsplineOptimizer();
+
+  BsplineOptimizer::Ptr bspline_optimizer_;
+
+  geometry_msgs::Twist my_twist;
+  ros::Publisher chassCtlPub; // 面向底盘发布速度消息
+
+  bool plan_flag;
+
+  vector<NonUniformBspline> traj_;
+  double traj_duration_;
+  ros::Time start_time_;
+
+  ros::Timer exec_timer_, safety_timer_, vis_timer_, test_something_timer_;
+  ros::Timer cmd_timer;
+  void cmdCallback(const ros::TimerEvent& e);
+
+  EDTEnvironment::Ptr edt_environment_;
+  // 更新跟随信息
+  void updateTrajInfo();
+  // 对yaw轴进行规划
+  void planYaw(const Eigen::Vector3d& start_yaw);
+  void calcNextYaw(const double& last_yaw, double& yaw);
+  ros::Publisher bspPathPub;     //bspline 路径
+
+  double nowYaw;
+  // 一般状态下里程计消息订阅
+  ros::Subscriber odom_sub;
+  // 正常里程计消息回调函数
+  void odom_callback(const nav_msgs::OdometryConstPtr &msg);
+
+  // 启动规划
+  bool callKinodynamicReplan(void);
+  // SECTION kinodynamic replanning
+  // 动力学规划
+  bool kinodynamicReplan(Eigen::Vector2d start_pt, Eigen::Vector2d start_vel,
+                          Eigen::Vector2d start_acc, Eigen::Vector2d end_pt,
+                          Eigen::Vector2d end_vel);
+
+  void execFSMCallback(const ros::TimerEvent& e);
+
+  void changeFSMExecState(FSM_EXEC_STATE new_state, string pos_call);
+  // 获得里程计位置速度数据 和 里程计数据
+  Eigen::Vector3d odom_pos_, odom_vel_;  // odometry state
+  Eigen::Quaterniond odom_orient_;
+
+// SECTION kinodynamic replanning
+// 动力学规划
+bool motionPlan::kinodynamicReplan(Eigen::Vector2d start_pt, Eigen::Vector2d start_vel,
+                                   Eigen::Vector2d start_acc, Eigen::Vector2d end_pt,
+                                   Eigen::Vector2d end_vel)
+{
+
+  std::cout << "[kino replan]: -----------------------" << std::endl;
+  cout << "start: " << start_pt.transpose() << ", " << start_vel.transpose() << ", "
+       << start_acc.transpose() << "\ngoal:" << end_pt.transpose() << ", " << end_vel.transpose()
+       << endl;
+
+  if ((start_pt - end_pt).norm() < 0.2)
+  {
+    cout << "Close goal" << endl;
+    return false;
+  }
+
+  ros::Time t1, t2;
+
+  local_data_.start_time_ = ros::Time::now();
+  double t_search = 0.0, t_opt = 0.0, t_adjust = 0.0;
+
+  Eigen::Vector2d init_pos = start_pt;
+  Eigen::Vector2d init_vel = start_vel;
+  Eigen::Vector2d init_acc = start_acc;
+
+  // kinodynamic path searching
+
+  t1 = ros::Time::now();
+
+  hybrid_astar_finder->reset();
+
+  int status = hybrid_astar_finder->search(start_pt, start_vel, start_acc, end_pt, end_vel, true);
+
+  if (status == Hybrid_astar::NO_PATH)
+  {
+    cout << "[kino replan]: kinodynamic search fail!" << endl;
+
+    // retry searching with discontinuous initial state
+    hybrid_astar_finder->reset();
+    status = hybrid_astar_finder->search(start_pt, start_vel, start_acc, end_pt, end_vel, false);
+
+    if (status == Hybrid_astar::NO_PATH)
+    {
+      cout << "[kino replan]: Can't find path." << endl;
+      return false;
+    }
+    else
+    {
+      cout << "[kino replan]: retry search success." << endl;
+    }
+  }
+  else
+  {
+    cout << "[kino replan]: kinodynamic search success." << endl;
+  }
+
+  // 获取规划的路径点
+  // plan_data_.kino_path_ = hybrid_astar_finder->getKinoTraj(0.01);
+  pathNav.worldpath = hybrid_astar_finder->getKinoTraj(0.01);
+
+  PublishPath(oriPathPub, pathNav.worldpath); // 发布路径
+  // 计算路径搜索时间
+  t_search = (ros::Time::now() - t1).toSec();
+
+  // parameterize the path to bspline
+  // 将参数转换为bspline所需要的参数
+  double ts = pp_.ctrl_pt_dist / pp_.max_vel_;
+  vector<Eigen::Vector2d> point_set, start_end_derivatives;
+  // 获取采样点 路径点的未知信息
+  hybrid_astar_finder->getSamples(ts, point_set, start_end_derivatives);
+
+  Eigen::MatrixXd ctrl_pts;
+
+  // 将控制点转换成B样条所需要的曲线
+  nuBspline->parameterizeToBspline(ts, point_set, start_end_derivatives, ctrl_pts);
+  // 对B样条初始化
+  NonUniformBspline init(ctrl_pts, 3, ts);
+  // bspline trajectory optimization
+
+  t1 = ros::Time::now();
+
+  // B样条优化跟随路径
+  // ctrl_pts = bspline_optimizer_->BsplineOptimizeTraj(ctrl_pts, ts, cost_function, 1, 1);
+
+  // 获取优化时间
+  t_opt = (ros::Time::now() - t1).toSec();
+
+  // iterative time adjustment
+
+  t1 = ros::Time::now();
+  NonUniformBspline pos = NonUniformBspline(ctrl_pts, 3, ts);
+
+  double to = pos.getTimeSum();
+  pos.setPhysicalLimits(pp_.max_vel_, pp_.max_acc_);
+  // 可行性验证
+  bool feasible = pos.checkFeasibility(false);
+
+  int iter_num = 0;
+  while (!feasible && ros::ok())
+  {
+    feasible = pos.reallocateTime();
+    if (++iter_num >= 3)
+      break;
+  }
+
+  double tn = pos.getTimeSum();
+
+  cout << "[kino replan]: Reallocate ratio: " << tn / to << endl;
+  if (tn / to > 3.0)
+    ROS_ERROR("reallocate error.");
+
+  t_adjust = (ros::Time::now() - t1).toSec();
+
+  // save planned results
+
+  local_data_.position_traj_ = pos;
+
+  double t_total = t_search + t_opt + t_adjust;
+  cout << "[kino replan]: time: " << t_total << ", search: " << t_search << ", optimize: " << t_opt
+       << ", adjust time:" << t_adjust << endl;
+
+  pp_.time_search_ = t_search;
+  pp_.time_optimize_ = t_opt;
+  pp_.time_adjust_ = t_adjust;
+
+  updateTrajInfo();
+
+  return true;
+}
+
+bool motionPlan::callKinodynamicReplan(void)
+{
+  bool plan_success =
+      kinodynamicReplan(Vector2d(start_pt_[0], start_pt_[1]),
+                        Vector2d(start_vel_[0], start_vel_[1]),
+                        Vector2d(start_acc_[0], start_acc_[1]),
+                        Vector2d(end_pt_[0], end_pt_[1]),
+                        Vector2d(end_vel_[0], end_vel_[1]));
+
+  if (plan_success)
+  {
+    planYaw(start_yaw_);
+
+    auto info = &local_data_;
+    
+    /* publish traj */
+    plan_manage::Bspline bspline;
+    bspline.order = 3;
+    bspline.start_time = info->start_time_;
+    bspline.traj_id = info->traj_id_;
+
+    Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
+
+    for (int i = 0; i < pos_pts.rows(); ++i)
+    {
+      geometry_msgs::Point pt;
+      pt.x = pos_pts(i, 0);
+      pt.y = pos_pts(i, 1);
+      pt.z = pos_pts(i, 2);
+      bspline.pos_pts.push_back(pt);
+    }
+
+    Eigen::VectorXd knots = info->position_traj_.getKnot();
+    for (int i = 0; i < knots.rows(); ++i)
+    {
+      bspline.knots.push_back(knots(i));
+    }
+
+    Eigen::MatrixXd yaw_pts = info->yaw_traj_.getControlPoint();
+    for (int i = 0; i < yaw_pts.rows(); ++i)
+    {
+      double yaw = yaw_pts(i, 0);
+      bspline.yaw_pts.push_back(yaw);
+    }
+    bspline.yaw_dt = info->yaw_traj_.getInterval();
+    
+    bspPathPub.publish(bspline);
+    
+    double tm, tmp;
+    info->yaw_traj_.getTimeSpan(tm, tmp);
+    pathNav.optpath.clear();
+    for (double t = tm; t <= tmp; t += 0.01)
+    {
+      Eigen::Vector3d pt = info->position_traj_.evaluateDeBoor(t);
+      pathNav.optpath.push_back(Vector2d(pt[0], pt[1]));
+    }
+
+    
+
+    PublishPath(optPathPub, pathNav.optpath);
+    return true;
+  }
+  else
+  {
+    cout << "generate new traj fail." << endl;
+    return false;
+  }
+}
+
+void motionPlan::changeFSMExecState(FSM_EXEC_STATE new_state, string pos_call)
+{
+  string state_str[5] = {"INIT", "WAIT_TARGET", "GEN_NEW_TRAJ", "REPLAN_TRAJ", "EXEC_TRAJ"};
+  int pre_s = int(exec_state_);
+  exec_state_ = new_state;
+  cout << "[" + pos_call + "]: from " + state_str[pre_s] + " to " + state_str[int(new_state)] << endl;
+}
+
+// 执行规划
+void motionPlan::execFSMCallback(const ros::TimerEvent &e)
+{
+  static int fsm_num = 0;
+  fsm_num++;
+  if (fsm_num == 100)
+  {
+    // printFSMExecState();
+    if (!have_odom_)
+      cout << "no odom." << endl;
+    if (!trigger_)
+      cout << "wait for goal." << endl;
+    fsm_num = 0;
+  }
+
+  // cout<<exec_state_<<endl;
+
+  switch (exec_state_)
+  {
+  case INIT:
+  {
+    if (!have_odom_)
+    {
+      return;
+    }
+    if (!trigger_)
+    {
+      return;
+    }
+    changeFSMExecState(WAIT_TARGET, "FSM");
+    break;
+  }
+  case WAIT_TARGET:
+  {
+    if (!have_target_)
+      return;
+    else
+    {
+      changeFSMExecState(GEN_NEW_TRAJ, "FSM");
+    }
+    break;
+  }
+  case GEN_NEW_TRAJ:
+  {
+    start_pt_ = odom_pos_;
+    start_vel_ = odom_vel_;
+    start_acc_.setZero();
+
+    Eigen::Vector3d rot_x = odom_orient_.toRotationMatrix().block(0, 0, 3, 1);
+    start_yaw_(0) = atan2(rot_x(1), rot_x(0));
+    start_yaw_(1) = start_yaw_(2) = 0.0;
+
+    bool success = callKinodynamicReplan();
+    if (success)
+    {
+      changeFSMExecState(EXEC_TRAJ, "FSM");
+    }
+    else
+    {
+      // have_target_ = false;
+      // changeFSMExecState(WAIT_TARGET, "FSM");
+      changeFSMExecState(GEN_NEW_TRAJ, "FSM");
+    }
+    break;
+  }
+
+  case EXEC_TRAJ:
+  {
+    /* determine if need to replan */
+    LocalTrajData *info = &local_data_;
+    ros::Time time_now = ros::Time::now();
+    double t_cur = (time_now - info->start_time_).toSec();
+    t_cur = min(info->duration_, t_cur);
+
+    Eigen::Vector3d pos = info->position_traj_.evaluateDeBoorT(t_cur);
+
+    /* && (end_pt_ - pos).norm() < 0.5 */
+    if (t_cur > info->duration_ - 1e-2)
+    {
+      have_target_ = false;
+      changeFSMExecState(WAIT_TARGET, "FSM");
+      return;
+    }
+    else if ((end_pt_ - pos).norm() < no_replan_thresh_)
+    {
+      // cout << "near end" << endl;
+      return;
+    }
+    else if ((info->start_pos_ - pos).norm() < replan_thresh_)
+    {
+      // cout << "near start" << endl;
+      return;
+    }
+    else
+    {
+      changeFSMExecState(REPLAN_TRAJ, "FSM");
+    }
+
+    break;
+  }
+
+  case REPLAN_TRAJ:
+  {
+    LocalTrajData *info = &local_data_;
+    ros::Time time_now = ros::Time::now();
+    double t_cur = (time_now - info->start_time_).toSec();
+
+    start_pt_ = odom_pos_;
+    start_vel_ = odom_vel_;
+    start_acc_.setZero();
+
+    start_yaw_(0) = info->yaw_traj_.evaluateDeBoorT(t_cur)[0];
+    start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_cur)[0];
+    start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_cur)[0];
+
+    bool success = callKinodynamicReplan();
+    if (success)
+    {
+      changeFSMExecState(EXEC_TRAJ, "FSM");
+    }
+    else
+    {
+      changeFSMExecState(GEN_NEW_TRAJ, "FSM");
+    }
+    break;
+  }
+  }
+}
+
+void motionPlan::updateTrajInfo()
+{
+  local_data_.velocity_traj_ = local_data_.position_traj_.getDerivative();
+  local_data_.acceleration_traj_ = local_data_.velocity_traj_.getDerivative();
+  local_data_.start_pos_ = local_data_.position_traj_.evaluateDeBoorT(0.0);
+  local_data_.duration_ = local_data_.position_traj_.getTimeSum();
+  local_data_.traj_id_ += 1;
+}
+
+void motionPlan::calcNextYaw(const double &last_yaw, double &yaw)
+{
+  // round yaw to [-PI, PI]
+
+  double round_last = last_yaw;
+
+  while (round_last < -M_PI)
+  {
+    round_last += 2 * M_PI;
+  }
+  while (round_last > M_PI)
+  {
+    round_last -= 2 * M_PI;
+  }
+
+  double diff = yaw - round_last;
+
+  if (fabs(diff) <= M_PI)
+  {
+    yaw = last_yaw + diff;
+  }
+  else if (diff > M_PI)
+  {
+    yaw = last_yaw + diff - 2 * M_PI;
+  }
+  else if (diff < -M_PI)
+  {
+    yaw = last_yaw + diff + 2 * M_PI;
+  }
+}
+
+void motionPlan::planYaw(const Eigen::Vector3d &start_yaw)
+{
+  ROS_INFO("plan yaw");
+  auto t1 = ros::Time::now();
+  // calculate waypoints of heading
+
+  auto &pos = local_data_.position_traj_;
+  double duration = pos.getTimeSum();
+
+  double dt_yaw = 0.3;
+  int seg_num = ceil(duration / dt_yaw);
+  dt_yaw = duration / seg_num;
+
+  const double forward_t = 2.0;
+  double last_yaw = start_yaw(0);
+  vector<Eigen::Vector3d> waypts;
+  vector<int> waypt_idx;
+
+  // seg_num -> seg_num - 1 points for constraint excluding the boundary states
+
+  for (int i = 0; i < seg_num; ++i)
+  {
+    double tc = i * dt_yaw;
+    Eigen::Vector3d pc = pos.evaluateDeBoorT(tc);
+    double tf = min(duration, tc + forward_t);
+    Eigen::Vector3d pf = pos.evaluateDeBoorT(tf);
+    Eigen::Vector3d pd = pf - pc;
+
+    Eigen::Vector3d waypt;
+    if (pd.norm() > 1e-6)
+    {
+      waypt(0) = atan2(pd(1), pd(0));
+      waypt(1) = waypt(2) = 0.0;
+      calcNextYaw(last_yaw, waypt(0));
+    }
+    else
+    {
+      waypt = waypts.back();
+    }
+    waypts.push_back(waypt);
+    waypt_idx.push_back(i);
+  }
+
+  // calculate initial control points with boundary state constraints
+
+  Eigen::MatrixXd yaw(seg_num + 3, 1);
+  yaw.setZero();
+
+  Eigen::Matrix3d states2pts;
+  states2pts << 1.0, -dt_yaw, (1 / 3.0) * dt_yaw * dt_yaw, 1.0, 0.0, -(1 / 6.0) * dt_yaw * dt_yaw, 1.0,
+      dt_yaw, (1 / 3.0) * dt_yaw * dt_yaw;
+  yaw.block(0, 0, 3, 1) = states2pts * start_yaw;
+
+  Eigen::Vector3d end_v = local_data_.velocity_traj_.evaluateDeBoorT(duration - 0.1);
+  Eigen::Vector3d end_yaw(atan2(end_v(1), end_v(0)), 0, 0);
+  calcNextYaw(last_yaw, end_yaw(0));
+  yaw.block(seg_num, 0, 3, 1) = states2pts * end_yaw;
+
+  // solve
+  // bspline_optimizer_->setWaypoints(waypts, waypt_idx);
+  // yaw = bspline_optimizer_->BsplineOptimizeTraj(yaw, dt_yaw, cost_func, 1, 1);
+
+  // update traj info
+  local_data_.yaw_traj_.setUniformBspline(yaw, 3, dt_yaw);
+  local_data_.yawdot_traj_ = local_data_.yaw_traj_.getDerivative();
+  local_data_.yawdotdot_traj_ = local_data_.yawdot_traj_.getDerivative();
+
+  vector<double> path_yaw;
+  for (int i = 0; i < waypts.size(); ++i)
+    path_yaw.push_back(waypts[i][0]);
+  plan_data_.path_yaw_ = path_yaw;
+  plan_data_.dt_yaw_ = dt_yaw;
+  plan_data_.dt_yaw_path_ = dt_yaw;
+
+  std::cout << "plan heading: " << (ros::Time::now() - t1).toSec() << std::endl;
+}

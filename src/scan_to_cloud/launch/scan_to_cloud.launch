@@ -1,0 +1,12 @@
+<launch>
+  <arg name="scan_topic" default="/scan"/>
+  <arg name="cloud_topic" default="/cloud_map"/>
+  <arg name="target_frame" default="base_link"/>
+
+  <node pkg="scan_to_cloud" type="scan_to_cloud_node" name="scan_to_cloud_node" output="screen">
+    <param name="scan_topic" value="$(arg scan_topic)"/>
+    <param name="cloud_topic" value="$(arg cloud_topic)"/>
+    <param name="target_frame" value="$(arg target_frame)"/>
+    <param name="use_latest_tf" value="true"/>
+  </node>
+</launch>

@@ -1,0 +1,16 @@
+<!--ZYC配置雷达节点-->
+<!-- 根据雷达的安装位置需要确定雷达扫描范围，剔除掉盲区位置，在运行定位算法的时候需要配合该节点运行 -->
+<launch>
+  <node name="urg_node" pkg="urg_node" type="urg_node"  output="screen">
+    <!-- 网口雷达ip地址 -->
+    <param name="ip_address"         type="string"    value="192.168.1.50"/>
+    <!-- 是否反向，不反向 -->
+    <param name="inverted"         type="bool"      value="false"/>
+    <!--  -->
+    <param name="angle_compensate" type="bool"      value="true"/>
+    <!-- 最小扫描范围 -->
+    <param name="angle_min"        type="double"    value="-2.355"/>
+    <!-- 最大扫描范围 -->
+    <param name="angle_max"        type="double"    value="2.355"/>
+  </node>
+</launch>

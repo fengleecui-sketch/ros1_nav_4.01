@@ -1,0 +1,45 @@
+<launch>
+  <!-- ✅ 真实环境：一般不要用仿真时间 -->
+  <param name="use_sim_time" value="false"/>
+
+  <!-- ✅ 机器人模型：用于 RViz 显示 -->
+  <param name="robot_description"
+      command="$(find xacro)/xacro --inorder '$(find tri_steer_description)/urdf/tri_steer_slam.xacro'"/>
+
+  <!-- ✅ TF 发布：需要真实机器人提供 /joint_states（来自驱动或 MCU 节点） -->
+  <node pkg="robot_state_publisher"
+        type="robot_state_publisher"
+        name="robot_state_publisher"
+        output="screen"/>
+
+ <node pkg="joint_state_publisher_gui"
+      type="joint_state_publisher_gui"
+      name="joint_state_publisher_gui"/>       
+
+  <!-- ✅ 静态地图（导航/AMCL 常用） -->
+  <node pkg="map_server"
+        type="map_server"
+        name="map_server"
+        args="$(find tri_steer_gazebo)/map/carto_mapc.yaml"
+        output="screen"/>
+
+  <!-- ❌ 不要在真实环境静态发布 map->odom
+      map->odom 应由 AMCL 或 Cartographer localization 发布 -->
+
+  <!-- ✅ 你自己的里程计/TF桥接节点
+       例如：订阅 carto_odom 或底盘里程计，发布 /odom + TF(odom->base_footprint/base_link) -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 0 0 0 map odom" />
+
+    <!-- 发布 odom->base_footprint（订阅 carto_odom 并转发 /odom + TF） -->
+  <node pkg="tri_steer_gazebo"
+      type="odom_tf_basefootprint"
+      name="odom_tf_basefootprint"
+      output="screen"/>
+
+
+  <!-- ✅ RViz -->
+  <node pkg="rviz"
+        type="rviz"
+        name="rviz"
+        args="-d $(find tri_steer_description)/rviz/tri_steer.rviz"/>
+</launch>
