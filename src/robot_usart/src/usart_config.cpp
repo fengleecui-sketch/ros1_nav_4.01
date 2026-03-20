@@ -326,7 +326,9 @@ void usartConfig::Usart_Config(void)
   //globalVelSub = private_node.subscribe("/acl_velocity",10,&usartConfig::GlobalVelSubCallback,this);
   globalVelSub = private_node.subscribe("/acl_velocity",10,&usartConfig::GlobalVelSubCallback,this);
 
-  cmdVelSub = private_node.subscribe("/cmd_vel", 10, &usartConfig::CmdVelCallback, this);
+  //cmdVelSub = private_node.subscribe("/cmd_vel", 10, &usartConfig::CmdVelCallback, this);
+
+  cmdVelSub = private_node.subscribe("/cmd_vel_auto", 10, &usartConfig::CmdVelCallback, this);
 
   // 50hz定时器
   cmdTimer = private_node.createTimer(ros::Duration(0.02),&usartConfig::controlCmdSendCallback,this);
