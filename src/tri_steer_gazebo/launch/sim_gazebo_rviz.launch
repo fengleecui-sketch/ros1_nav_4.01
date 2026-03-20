@@ -41,7 +41,7 @@
       launch-prefix="bash -lc 'sleep 2; exec $0 $@'"/>
   
   <!-- 加载地图描述 -->
-  <node pkg="map_server" type="map_server" name="map_server" args="$(find tri_steer_gazebo)/map/carto_mapb.yaml"/>
+  <node pkg="map_server" type="map_server" name="map_server" args="$(find tri_steer_gazebo)/map/carto_mapc.yaml"/>
  
   <node pkg="tf2_ros" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 0 0 0 map odom" />
 
