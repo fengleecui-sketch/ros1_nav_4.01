@@ -20,7 +20,7 @@
   <node pkg="map_server"
         type="map_server"
         name="map_server"
-        args="$(find tri_steer_gazebo)/map/carto_mapc.yaml"
+        args="$(find tri_steer_gazebo)/map/carto_mape.yaml"
         output="screen"/>
 
   <!-- ❌ 不要在真实环境静态发布 map->odom

@@ -1,7 +1,7 @@
 <launch>
   <!-- 加载实际场景的地图 -->
   <!-- <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/5all.yaml"/> -->
-  <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/carto_mapc.yaml"/>
+  <node pkg="map_server" type="map_server" name="map_server" args="$(find robot_costmap)/maps/carto_mape.yaml"/>
 </launch>
 
 

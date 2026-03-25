@@ -2,7 +2,11 @@
     "uartParam":
     {
         "passWord":"yg",
+        "注释端口号":"/dev/ttyACM0",
         "usbUsart":"/dev/ttyUSB0",
         "isDisplay":1
+        
     }
 }
+
+

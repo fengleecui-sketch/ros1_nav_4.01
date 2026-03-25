@@ -17,6 +17,7 @@
 INITIALIZE_EASYLOGGINGPP
 
 #define usbUsart  "/dev/ttyUSB0"
+// #define usbUsart  "/dev/ttyACM0"
 
 usartConfig::usartConfig() : private_node("~")
 {
@@ -302,7 +303,8 @@ void usartConfig::Usart_Config(void)
   el::Loggers::reconfigureAllLoggers(conf);
 
   boost::asio::io_service iosev;
-  serial_port_ = new serial_port(iosev, "/dev/ttyUSB0");
+   serial_port_ = new serial_port(iosev, "/dev/ttyUSB0");
+  // serial_port_ = new serial_port(iosev, "/dev/ttyACM0");
 
     // 配置串口参数
   // 设定串口波特率
