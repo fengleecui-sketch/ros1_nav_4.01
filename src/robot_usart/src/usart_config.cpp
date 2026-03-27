@@ -1,429 +1,628 @@
-/*
- * @Author: your name
- * @Date: 2023-03-21 09:57:25
- * @LastEditTime: 2024-04-19 00:10:04
- * @LastEditors: your name
- * @Description: 
- * @FilePath: /MyFormProject/src/robot_usart/src/usart_config.cpp
- * 可以输入预定的版权声明、个性签名、空行等
- */
 #include "robot_usart/usart_config.h"
-//log日志
-#include "easylog/easylogging++.h"
 
-#include <nav_msgs/Path.h>
-#include <nav_msgs/OccupancyGrid.h>
+#include <unistd.h>
+#include <iomanip>
+#include <sstream>
 
-INITIALIZE_EASYLOGGINGPP
-
-#define usbUsart  "/dev/ttyUSB0"
-// #define usbUsart  "/dev/ttyACM0"
-
-usartConfig::usartConfig() : private_node("~")
+/**
+ * @brief usartConfig 类构造函数
+ * 1. 初始化接收数据结构体
+ * 2. 初始化串口、话题、定时器、接收线程
+ */
+usartConfig::usartConfig() : private_node_("~")
 {
-  // 串口配置
-  Usart_Config();
-  
-  ros::Rate r(50);
-  while (ros::ok())
-  {
-    ros::spinOnce();
-    // displayUsartFreq();
-      // 发布ROS消息的代码
-    r.sleep();
-  }
-
-  // 串口关闭
-  UsartClose();
+    recData_Init();   // 初始化接收数据变量
+    Usart_Config();   // 初始化串口和ROS相关配置
 }
 
+/**
+ * @brief usartConfig 类析构函数
+ * 程序退出时关闭串口
+ */
 usartConfig::~usartConfig()
 {
-
+    UsartClose();
 }
 
-
-void usartConfig::controlCmdSendCallback(const ros::TimerEvent &)
+/**
+ * @brief 打开串口并配置串口参数
+ * @param port_name 串口设备名称，例如 /dev/ttyUSB0
+ * @param baud_rate 波特率，例如 460800
+ * @return true 打开成功
+ * @return false 打开失败
+ */
+bool usartConfig::OpenSerial(const std::string &port_name, int baud_rate)
 {
-  try
-  {
-    //--[0,1]帧头
-    usartTxBuffer[0] = 0x03;
-    usartTxBuffer[1] = 0xfc;
-    //--[2,3]车体x线速度
-    usartTxBuffer[2] = (int)((controlMotion.xSpeed + 4.000f) * 1000) >> 8;
-    usartTxBuffer[3] = (int)((controlMotion.xSpeed + 4.000f) * 1000) & 0xff;
-    //--[4,5]车体y线速度
-    usartTxBuffer[4] = (int)((controlMotion.ySpeed + 4.000f) * 1000) >> 8;
-    usartTxBuffer[5] = (int)((controlMotion.ySpeed + 4.000f) * 1000) & 0xff;
-    //--[6,7]底盘 yaw值
-    usartTxBuffer[6] = (int)((controlMotion.chassisAngle*RAD_TO_ANGLE + 180.0f) * 100) >> 8;
-    usartTxBuffer[7] = (int)((controlMotion.chassisAngle*RAD_TO_ANGLE + 180.0f) * 100) & 0xff;
-    //--[8,9,10]底盘 角速度值
-    usartTxBuffer[8] = (int)((controlMotion.chassisGyro*RAD_TO_ANGLE + 360.0f) * 100) >> 16;
-    usartTxBuffer[9] = (int)((controlMotion.chassisGyro*RAD_TO_ANGLE + 360.0f) * 100) >> 8;
-    usartTxBuffer[10] = (int)((controlMotion.chassisGyro*RAD_TO_ANGLE + 360.0f) * 100) & 0xff;
-
-    // 发送运行模式 1是发送的全向运动速度 0是发送的直接速度控制
-    usartTxBuffer[11] = use_global;
-
-    usart_check.Append_CRC16_Check_Sum(usartTxBuffer,TX_LENGTH);
-    // CRC校验
-    if(serial_port_->is_open())
+    try
     {
-      boost::asio::write(*serial_port_, boost::asio::buffer(usartTxBuffer, TX_LENGTH));
+        // 创建串口对象
+        serial_port_.reset(new boost::asio::serial_port(io_service_));
+
+        // 打开指定串口
+        serial_port_->open(port_name);
+
+        // 设置波特率
+        serial_port_->set_option(boost::asio::serial_port::baud_rate(baud_rate));
+
+        // 设置流控：无流控
+        serial_port_->set_option(boost::asio::serial_port::flow_control(boost::asio::serial_port::flow_control::none));
+
+        // 设置校验位：无校验
+        serial_port_->set_option(boost::asio::serial_port::parity(boost::asio::serial_port::parity::none));
+
+        // 设置停止位：1位停止位
+        serial_port_->set_option(boost::asio::serial_port::stop_bits(boost::asio::serial_port::stop_bits::one));
+
+        // 设置数据位：8位
+        serial_port_->set_option(boost::asio::serial_port::character_size(8));
+
+        ROS_INFO("Serial open success: %s, baud=%d", port_name.c_str(), baud_rate);
+        return true;
     }
-  }
-  catch (...)
-  {
-    cout << "串口无法链接" << endl;
-    exit(0);
-  }
+    catch (const std::exception &e)
+    {
+        ROS_ERROR("Open serial failed: %s", e.what());
+
+        // 打开失败时释放串口对象
+        serial_port_.reset();
+        return false;
+    }
 }
 
-void usartConfig::displayUsartFreq(void)
+/**
+ * @brief 从ROS参数服务器读取串口相关参数
+ * 包括：
+ * 1. 串口号
+ * 2. 波特率
+ * 3. 是否使用全局速度控制
+ */
+void usartConfig::ConfigSerialPort()
 {
-  freqFlag = 1;
-  // 1s计数
-  static uint32_t i = 0,time = 0,num = 0;
-  static uint64_t flagSucc = 0;
-  i++;
-  if(i >= 1000)
-  {
-    // 超过1000不相信
-    if(freq >= 1000)
-    {
-      freq = 0;
-    }
-    
-    i = 0;
-    if(freq > 0)
-    {
-      flagSucc += freq;
-      num ++;
-      cout<<(float)(flagSucc/num)<<endl;
-    }
-    ROS_WARN("%d\r\n",freq);
-    freq = 0;
-    time ++;
-    cout<<time<<endl;
-  }
+    // 读取串口设备名，默认 /dev/ttyUSB0
+    private_node_.param<std::string>("port_name", port_name_, std::string("/dev/ttyUSB0"));
+
+    // 读取波特率，默认 460800
+    private_node_.param<int>("baud_rate", baud_rate_, 460800);
+
+    // 读取是否使用全局速度，默认 false
+    private_node_.param<bool>("use_global", use_global_, false);
+
+    ROS_INFO("port_name: %s", port_name_.c_str());
+    ROS_INFO("baud_rate: %d", baud_rate_);
+    ROS_INFO("use_global: %d", static_cast<int>(use_global_));
 }
 
-// 读取串口数据
-int usartConfig::ReadUsart() {
-  // 当串口打开的状况下
-  if (serial_port_->is_open()) {
-    while (true) {
-      try {
-        // 当开始接收
-        if (recv_buff.ON_RECV_HEADER) {
-          // 接收字符串长度大于1
-          if (recv_buff.recv_len < 1) {
-            // 开始读取数据长度
-            int recv_len = boost::asio::read(
-                *serial_port_, boost::asio::buffer(recv_buff.buff, 1));
-            // 当长度小于等于0的时候
-            if (recv_len <= 0) {
-              return -3;  // Read No Data
-            }
-            recv_buff.recv_len = recv_len;
-          }
-          // 当第一位为frame_header 且没有犯错误的情况下，
-          if (recv_buff.buff[0] == frame_header && (!recv_buff.WRONG_TICK)) {
-            recv_buff.ON_RECV_HEADER = false;
-          } else {
-            // 没有犯错
-            recv_buff.WRONG_TICK = false;
-            bool find_header = false;
-            // 对接收到的数据进行判断
-            for (int i = 1; i < recv_buff.recv_len; i++) {
-              // 当接收的数据中位为frame_header的时候
-              if (recv_buff.buff[i] == frame_header) {
-                // 重新计算字符串长度
-                recv_buff.recv_len = recv_buff.recv_len - i;
-                // 将字符串进行复制
-                memcpy(recv_buff.buff, recv_buff.buff + i, recv_buff.recv_len);
-                // 
-                recv_buff.ON_RECV_HEADER = false;
-                // 接收类型正确
-                recv_buff.ON_RECV_TYPE = true;
-                // 接收数据正确
-                recv_buff.ON_RECV_DATA = true;
-                // 寻找到了header
-                find_header = true;
-                break;
-              }
-            }
-            // 当没有header
-            if (!find_header) {
-              // 串口接收buff复位
-              recv_buff.reset();
-              // header设定为正确
-              recv_buff.ON_RECV_HEADER = true;
-              recv_buff.ON_RECV_TYPE = true;
-              recv_buff.ON_RECV_DATA = true;
-            }
-            continue;
-          }
-        }
-
-        // 当接收数据类型正确
-        if (recv_buff.ON_RECV_TYPE) {
-          // 当buff长度小于2
-          if (recv_buff.recv_len < 2) {
-            // 再次读取串口数据
-            int recv_len = boost::asio::read(
-                *serial_port_, boost::asio::buffer(recv_buff.buff + 1, 1));
-            // 如果接收数据长度还小于0 返回值-3
-            if (recv_len <= 0) {
-              return -3;
-            }
-            recv_buff.recv_len = 1 + recv_len;
-          }
-          // 第二位的标志在 0x01 到 0x05之间
-          if (recv_buff.buff[1] == 0xfa) {
-            recv_buff.ON_RECV_TYPE = false;
-          } else {
-            // 犯错有问题
-            recv_buff.set_wrong_tick();
-            continue;
-          }
-        }
-
-        // 
-        if (recv_buff.ON_RECV_DATA) {
-          // 获取数据长度
-          int expected_recv_len = RX_LENGTH;
-          // 如果接收到的数据长度小于期望的数据长度
-          if (recv_buff.recv_len < expected_recv_len) {
-            // 读取串口的接收长度
-            int recv_len = boost::asio::read(
-                *serial_port_,
-                boost::asio::buffer(recv_buff.buff + recv_buff.recv_len,
-                                    expected_recv_len - recv_buff.recv_len));
-            if (recv_len <= 0) {
-              return -3;
-            }
-            // 接收到的数据长度 为 原长度+读取到的字符串长度
-            recv_buff.recv_len = recv_buff.recv_len + recv_len;
-          }
-          // 当接收到的长度小于期望长度返private_node回错误码-2 
-          if (recv_buff.recv_len < expected_recv_len) {
-            return -2;  // Read Length Error
-          }
-          // 进行CRC校验,正确则返回true 
-          if (usart_check.Verify_CRC16_Check_Sum(recv_buff.buff, expected_recv_len)) {
-              // 对接收数据进行解码
-              recData_Decode();
-              /* 时间戳解算 */
-              uint32_t time_stamp_10us = recv_buff.buff[12] << 28 | recv_buff.buff[13] << 24 | recv_buff.buff[14] << 16
-                                        | recv_buff.buff[15] << 8 | recv_buff.buff[16];
-
-              // cout<<time_stamp_10us<<endl;
-              if(freqFlag == 1)   //当标志位置1此时开始打印
-              {
-                freq++;
-              }
-            recv_buff.ON_RECV_DATA = false;
-          } else {  //CRC校验错误
-            recv_buff.set_wrong_tick();
-            return -1;  // CRC Error
-          }
-        }
-        return recv_buff.buff[1];
-      } catch (...) {
-        return -3;
-      }
-    }
-  } else {
-    return -4;  // Usart Offline
-  }
-}
-
-void usartConfig::UsartClose() {
-  serial_port_->close();
-  on_running = false;
-}
-
-// 串口重启
-void usartConfig::UsartRestart() 
-{ Usart_Config(); }
-
-// 串口接收线程
-void usartConfig::RecvThread() {
-  // double last_recv_time = tdttoolkit::Time::GetTimeNow();
-  while (on_running) {
-    thread_locker.lock();
-    int ret = ReadUsart();
-    thread_locker.unlock();
-    if (ret == -3) {
-      // double cnt_time = tdttoolkit::Time::GetTimeNow();
-      // if (fabs(cnt_time - last_recv_time) > 1e6) {
-        // last_recv_time = cnt_time;
-        // TDT_WARNING("串口获取超时,重启串口");
-        UsartRestart();
-      // }
-      usleep(100);  // 两次主动获取串口信息之间延时，单位us
-    } else {
-      // last_recv_time = tdttoolkit::Time::GetTimeNow();
-    }
-    if (ret == -1) {
-      // TDT_WARNING("CRC校验失败");
-      // usleep(10);
-    }
-    if (ret == -4) {
-      // TDT_WARNING("串口离线,重启串口");
-      UsartRestart();
-      usleep(100);
-    }
-    if (ret > 0) {
-      // shared_data::DataRecver[ret]->ParseData(recv_buff.buff);
-      recv_buff.reset();
-    }
-  }
-}
-
-
-// 串口配置
+/**
+ * @brief 串口功能整体初始化函数
+ * 主要完成：
+ * 1. 读取参数
+ * 2. 打开串口
+ * 3. 初始化话题订阅和发布
+ * 4. 初始化定时器
+ * 5. 启动串口接收线程
+ */
 void usartConfig::Usart_Config(void)
 {
-  //--json参数读取配置
-  ifstream(ros::package::getPath("robot_usart") + "/src/Jason/param.json") >> param;
-  //--shell终端赋权限
-  string linuxCmd;
-  linuxCmd = linuxCmd + "echo " + (string)param["uartParam"].at("passWord") + " | sudo -S chmod 777 " + (string)param["uartParam"].at("usbUsart");
-  int res = system(linuxCmd.c_str());
-  if(res == -1)
-  {
-    ROS_WARN("linuxCmd Error!");
-  }
-  //--easylog日志记录配置
-  el::Configurations conf(ros::package::getPath("robot_usart") + "/src/easylog/log.conf");
-  el::Loggers::reconfigureAllLoggers(conf);
+    // 读取参数
+    ConfigSerialPort();
 
-  boost::asio::io_service iosev;
-   serial_port_ = new serial_port(iosev, "/dev/ttyUSB0");
-  // serial_port_ = new serial_port(iosev, "/dev/ttyACM0");
+    // 打开串口
+    if (!OpenSerial(port_name_, baud_rate_))
+    {
+        ROS_ERROR("Initial serial open failed.");
+    }
 
-    // 配置串口参数
-  // 设定串口波特率
-  serial_port_->set_option(serial_port::baud_rate(460800));
-  // 设置不限流控制，可以以最大速率进行传输
-  serial_port_->set_option(
-      serial_port::flow_control(serial_port::flow_control::none));
-  // 无奇偶校验
-  serial_port_->set_option(serial_port::parity(serial_port::parity::none));
-  // 一个停止位
-  serial_port_->set_option(serial_port::stop_bits(serial_port::stop_bits::one));
-  // 数据位设置为8位
-  serial_port_->set_option(serial_port::character_size(8));
+    // 订阅底盘全局速度控制话题
+    globalVelSub_ = private_node_.subscribe("/acl_velocity", 10, &usartConfig::GlobalVelSubCallback, this);
 
-  // 加载参数
-  private_node.param("usart_node/use_global",use_global,false); // 是否仿真
+    // 订阅自动控制速度话题
+    cmdVelSub_ = private_node_.subscribe("/cmd_vel_auto", 10, &usartConfig::CmdVelCallback, this);
 
-  cout<<"use_global:"<<use_global<<endl;
+    // 50Hz定时发送控制命令给下位机
+    cmdTimer_ = private_node_.createTimer(ros::Duration(0.02), &usartConfig::controlCmdSendCallback, this);
 
-  // 订阅运动规划部分发布的速度消息
-  //globalVelSub = private_node.subscribe("/acl_velocity",10,&usartConfig::GlobalVelSubCallback,this);
-  globalVelSub = private_node.subscribe("/acl_velocity",10,&usartConfig::GlobalVelSubCallback,this);
+    // 200Hz定时发布底盘传感器数据
+    sensorTimer_ = private_node_.createTimer(ros::Duration(0.005), &usartConfig::PubSensor_DataSendCallback, this);
 
-  //cmdVelSub = private_node.subscribe("/cmd_vel", 10, &usartConfig::CmdVelCallback, this);
+    // 发布底盘传感器数据话题
+    SensorDataPub_ = private_node_.advertise<robot_communication::sensorData>("/chassis_sensor_data", 1);
 
-  cmdVelSub = private_node.subscribe("/cmd_vel_auto", 10, &usartConfig::CmdVelCallback, this);
-
-  // 50hz定时器
-  cmdTimer = private_node.createTimer(ros::Duration(0.02),&usartConfig::controlCmdSendCallback,this);
-  // 以200hz定时器发布传感器消息
-  sensorTimer = private_node.createTimer(ros::Duration(0.005),&usartConfig::PubSensor_DataSendCallback,this);
-
-  // 发布底盘传感器消息
-  SensorDataPub = private_node.advertise<robot_communication::sensorData>("/chassis_sensor_data",1);
-
-
-
-  //
-  on_running = true;
-  // RecvThread();
-  auto recv_thread = std::thread(&usartConfig::RecvThread,this);
-  recv_thread.detach();
+    // 如果接收线程还未启动，则启动接收线程
+    if (!on_running_)
+    {
+        on_running_ = true;
+        recv_thread_ = std::thread(&usartConfig::RecvThread, this);
+        recv_thread_.detach();   // 分离线程，让其在后台运行
+    }
 }
 
+/**
+ * @brief 关闭串口
+ * 1. 停止接收线程运行标志
+ * 2. 关闭串口设备
+ */
+void usartConfig::UsartClose()
+{
+    on_running_ = false;
+
+    try
+    {
+        if (serial_port_ && serial_port_->is_open())
+        {
+            serial_port_->close();
+            ROS_INFO("Serial closed.");
+        }
+    }
+    catch (const std::exception &e)
+    {
+        ROS_WARN("Serial close exception: %s", e.what());
+    }
+}
+
+/**
+ * @brief 串口重启函数
+ * 在串口离线、读取异常时调用：
+ * 1. 关闭串口
+ * 2. 释放串口对象
+ * 3. 延时一段时间
+ * 4. 重新打开串口
+ */
+void usartConfig::UsartRestart()
+{
+    try
+    {
+        if (serial_port_ && serial_port_->is_open())
+        {
+            serial_port_->close();
+        }
+    }
+    catch (...)
+    {
+        // 这里即使关闭异常，也不影响后续重启流程
+    }
+
+    // 释放原串口对象
+    serial_port_.reset();
+
+    // 延时100ms，避免立即重连失败
+    usleep(1000 * 100);
+
+    // 重新打开串口
+    OpenSerial(port_name_, baud_rate_);
+}
+
+/**
+ * @brief 定时发送控制命令给下位机
+ * 发送帧格式：
+ * [0]   0x03
+ * [1]   0xFC
+ * [2:3] x速度
+ * [4:5] y速度
+ * [6:7] 底盘角度
+ * [8:10] 底盘角速度
+ * [11]  use_global标志
+ * [12:13] CRC16
+ */
+void usartConfig::controlCmdSendCallback(const ros::TimerEvent &)
+{
+    try
+    {
+        // 串口未打开则直接返回
+        if (!(serial_port_ && serial_port_->is_open()))
+        {
+            return;
+        }
+
+        // 帧头
+        usartTxBuffer_[0] = 0x03;
+        usartTxBuffer_[1] = 0xFC;
+
+        // 将浮点控制量编码为整型发送
+        int x_speed = static_cast<int>((controlMotion_.xSpeed + 4.000f) * 1000.0f);
+        int y_speed = static_cast<int>((controlMotion_.ySpeed + 4.000f) * 1000.0f);
+        int yaw_deg  = static_cast<int>((controlMotion_.chassisAngle * RAD_TO_ANGLE + 180.0f) * 100.0f);
+        int gyro_deg = static_cast<int>((controlMotion_.chassisGyro  * RAD_TO_ANGLE + 360.0f) * 100.0f);
+
+        // x速度高字节、低字节
+        usartTxBuffer_[2] = (x_speed >> 8) & 0xFF;
+        usartTxBuffer_[3] = x_speed & 0xFF;
+
+        // y速度高字节、低字节
+        usartTxBuffer_[4] = (y_speed >> 8) & 0xFF;
+        usartTxBuffer_[5] = y_speed & 0xFF;
+
+        // yaw角高字节、低字节
+        usartTxBuffer_[6] = (yaw_deg >> 8) & 0xFF;
+        usartTxBuffer_[7] = yaw_deg & 0xFF;
+
+        // 角速度共3字节，高位在前
+        usartTxBuffer_[8]  = (gyro_deg >> 16) & 0xFF;
+        usartTxBuffer_[9]  = (gyro_deg >> 8) & 0xFF;
+        usartTxBuffer_[10] = gyro_deg & 0xFF;
+
+        // 是否使用全局速度控制
+        usartTxBuffer_[11] = static_cast<uint8_t>(use_global_ ? 1 : 0);
+
+        // 追加CRC16校验
+        usart_check_.Append_CRC16_Check_Sum(usartTxBuffer_, TX_LENGTH);
+
+        // 将整帧数据写入串口
+        boost::asio::write(*serial_port_, boost::asio::buffer(usartTxBuffer_, TX_LENGTH));
+    }
+    catch (const std::exception &e)
+    {
+        ROS_ERROR("Serial write failed: %s", e.what());
+    }
+}
+
+/**
+ * @brief 将接收到的字节数组以16进制打印出来
+ * @param data 数据首地址
+ * @param len  数据长度
+ */
+void usartConfig::PrintHexBuffer(const uint8_t *data, int len)
+{
+    std::ostringstream oss;
+    for (int i = 0; i < len; ++i)
+    {
+        oss << std::uppercase << std::hex << std::setw(2) << std::setfill('0')
+            << static_cast<int>(data[i]) << " ";
+    }
+
+    // 打印接收到的原始16进制数据
+    // ROS_INFO_STREAM("RX HEX: " << oss.str());
+}
+
+/**
+ * @brief 从串口读取一帧完整数据
+ * 接收流程：
+ * 1. 先读帧头
+ * 2. 再读类型字节
+ * 3. 再读剩余数据直到19字节完整
+ * 4. 进行CRC校验
+ * 5. 校验通过则解码
+ *
+ * @return int
+ * >0  : 成功，返回数据类型
+ * -1  : CRC错误
+ * -2  : 长度错误
+ * -3  : 读取异常
+ * -4  : 串口未打开
+ * -5  : 帧头错误
+ * -6  : 类型错误
+ */
+int usartConfig::ReadUsart()
+{
+    // 串口未打开
+    if (!(serial_port_ && serial_port_->is_open()))
+    {
+        return -4;
+    }
+
+    try
+    {
+        // -----------------------------
+        // 第一步：接收帧头
+        // -----------------------------
+        if (recv_buff_.ON_RECV_HEADER)
+        {
+            // 如果当前缓存中还没有字节，则先读取1字节
+            if (recv_buff_.recv_len < 1)
+            {
+                int recv_len = boost::asio::read(*serial_port_, boost::asio::buffer(recv_buff_.buff, 1));
+                if (recv_len <= 0) return -3;
+                recv_buff_.recv_len = recv_len;
+            }
+
+            // 判断帧头是否正确
+            if (recv_buff_.buff[0] == frame_header_ && (!recv_buff_.WRONG_TICK))
+            {
+                recv_buff_.ON_RECV_HEADER = false;
+            }
+            else
+            {
+                // 帧头错误，复位状态机
+                recv_buff_.WRONG_TICK = false;
+                recv_buff_.reset();
+                return -5;
+            }
+        }
+
+        // -----------------------------
+        // 第二步：接收类型字节
+        // -----------------------------
+        if (recv_buff_.ON_RECV_TYPE)
+        {
+            // 如果当前长度不足2字节，则继续再读1字节
+            if (recv_buff_.recv_len < 2)
+            {
+                int recv_len = boost::asio::read(*serial_port_, boost::asio::buffer(recv_buff_.buff + 1, 1));
+                if (recv_len <= 0) return -3;
+                recv_buff_.recv_len += recv_len;
+            }
+
+            // 判断类型字节是否正确
+            if (recv_buff_.buff[1] == frame_type_)
+            {
+                recv_buff_.ON_RECV_TYPE = false;
+            }
+            else
+            {
+                // 类型字节错误，复位状态机
+                recv_buff_.set_wrong_tick();
+                return -6;
+            }
+        }
+
+        // -----------------------------
+        // 第三步：接收整帧剩余数据
+        // -----------------------------
+        if (recv_buff_.ON_RECV_DATA)
+        {
+            int expected_recv_len = RX_LENGTH;
+
+            // 如果当前接收长度不足一帧，则继续读取剩余字节
+            if (recv_buff_.recv_len < expected_recv_len)
+            {
+                int recv_len = boost::asio::read(
+                    *serial_port_,
+                    boost::asio::buffer(recv_buff_.buff + recv_buff_.recv_len,
+                                        expected_recv_len - recv_buff_.recv_len));
+                if (recv_len <= 0) return -3;
+                recv_buff_.recv_len += recv_len;
+            }
+
+            // 如果长度仍然不够，返回长度错误
+            if (recv_buff_.recv_len < expected_recv_len)
+            {
+                return -2;
+            }
+
+            // CRC校验通过
+            if (usart_check_.Verify_CRC16_Check_Sum(recv_buff_.buff, expected_recv_len))
+            {
+                // 打印接收到的整帧16进制数据
+                PrintHexBuffer(recv_buff_.buff, expected_recv_len);
+
+                // 对接收数据进行解码
+                recData_Decode();
+
+                // 如果开启频率统计，则计数加1
+                if (freqFlag_ == 1)
+                {
+                    freq_++;
+                }
+
+                recv_buff_.ON_RECV_DATA = false;
+            }
+            else
+            {
+                // CRC校验失败
+                ROS_WARN("CRC check failed.");
+                PrintHexBuffer(recv_buff_.buff, expected_recv_len);
+                recv_buff_.set_wrong_tick();
+                return -1;
+            }
+        }
+
+        // 返回类型字节
+        return recv_buff_.buff[1];
+    }
+    catch (const std::exception &e)
+    {
+        ROS_ERROR("ReadUsart exception: %s", e.what());
+        return -3;
+    }
+}
+
+/**
+ * @brief 串口接收线程函数
+ * 线程循环执行：
+ * 1. 调用 ReadUsart() 读取串口数据
+ * 2. 根据返回值判断是否成功、是否错误、是否需要重启串口
+ */
+void usartConfig::RecvThread()
+{
+    ROS_INFO("RecvThread started.");
+
+    // 线程持续运行，直到节点退出或 on_running_ 被置为 false
+    while (on_running_ && ros::ok())
+    {
+        int ret = 0;
+
+        // 加锁，避免串口读和其他操作冲突
+        {
+            std::lock_guard<std::mutex> lock(thread_locker_);
+            ret = ReadUsart();
+        }
+
+        // 成功接收到一帧数据
+        if (ret > 0)
+        {
+            recv_buff_.reset();
+        }
+        // CRC错误
+        else if (ret == -1)
+        {
+            ROS_WARN_THROTTLE(1.0, "CRC error.");
+        }
+        // 长度错误
+        else if (ret == -2)
+        {
+            ROS_WARN_THROTTLE(1.0, "Read length error.");
+        }
+        // 串口读取异常
+        else if (ret == -3)
+        {
+            ROS_WARN_THROTTLE(1.0, "Serial read error, restart serial.");
+            UsartRestart();
+            usleep(1000 * 100);
+        }
+        // 串口离线
+        else if (ret == -4)
+        {
+            ROS_WARN_THROTTLE(1.0, "Serial offline, restart serial.");
+            UsartRestart();
+            usleep(1000 * 100);
+        }
+        // 帧头不匹配
+        else if (ret == -5)
+        {
+            ROS_DEBUG("Header mismatch.");
+        }
+        // 类型字节不匹配
+        else if (ret == -6)
+        {
+            ROS_DEBUG("Type mismatch.");
+        }
+    }
+
+    ROS_INFO("RecvThread exit.");
+}
+
+/**
+ * @brief 初始化接收数据结构体
+ * 程序启动时将所有接收量清零
+ */
 void usartConfig::recData_Init(void)
 {
-  recSensor.chassix_x_linear_velocity = 0.0f;
-  recSensor.chassis_y_linear_velocity = 0.0f;
-
-  recSensor.chassis_x_accelerate = 0.0f;
-  recSensor.chassis_y_accelerate = 0.0f;
-
-  recSensor.chassis_yaw = 0.0f;
-
-  recSensor.time_stamp_10us = 0;
+    recSensor_.chassix_x_linear_velocity = 0.0f;
+    recSensor_.chassis_y_linear_velocity = 0.0f;
+    recSensor_.chassis_x_accelerate = 0.0f;
+    recSensor_.chassis_y_accelerate = 0.0f;
+    recSensor_.chassis_yaw = 0.0f;
+    recSensor_.time_stamp_10us = 0;
 }
 
+/**
+ * @brief 对接收到的串口数据进行解码
+ * 接收帧格式中：
+ * [2:3]   x线速度
+ * [4:5]   y线速度
+ * [6:7]   x加速度
+ * [8:9]   y加速度
+ * [10:11] yaw角
+ * [12:15] 时间戳
+ */
 void usartConfig::recData_Decode(void)
 {
-  /* 线速度解算 */
-  recSensor.chassix_x_linear_velocity = ((recv_buff.buff[2] << 8 | recv_buff.buff[3]) - 4000.0f)/1000.0f;
-  recSensor.chassis_y_linear_velocity = ((recv_buff.buff[4] << 8 | recv_buff.buff[5]) - 4000.0f)/1000.0f;
-  /* 加速度解算 */
-  recSensor.chassis_x_accelerate = ((recv_buff.buff[6] << 8 | recv_buff.buff[7]) - 5000.0f)/1000.0f;
-  recSensor.chassis_y_accelerate = ((recv_buff.buff[8] << 8 | recv_buff.buff[9]) - 5000.0f)/1000.0f;
-  /* 角速度解算 */
-  recSensor.chassis_yaw = ((recv_buff.buff[10] << 8 | recv_buff.buff[11]) - 18000.0f)/100.0f;
-  /* 时间戳解算 */
-  recSensor.time_stamp_10us = recv_buff.buff[12] << 28 | recv_buff.buff[13] << 24 | recv_buff.buff[14] << 16
-                              | recv_buff.buff[15] << 8 | recv_buff.buff[16];
+    // 解码x方向线速度
+    recSensor_.chassix_x_linear_velocity =
+        ((recv_buff_.buff[2] << 8 | recv_buff_.buff[3]) - 4000.0f) / 1000.0f;
 
-  // std::cout << fontColorWhite << "v_x" <<recSensor.chassix_x_linear_velocity<<" "
-  //                             << "v_y" <<recSensor.chassis_y_linear_velocity<<" "
-  //                             << "a_x" <<recSensor.chassis_x_accelerate<<" "
-  //                             << "a_y" <<recSensor.chassis_y_accelerate<<" "
-  //                             << "yaw" <<recSensor.chassis_yaw <<""
-  // <<"[" <<"time_stamp:"<<recSensor.time_stamp_10us << "]"
-  // << std::endl;
+    // 解码y方向线速度
+    recSensor_.chassis_y_linear_velocity =
+        ((recv_buff_.buff[4] << 8 | recv_buff_.buff[5]) - 4000.0f) / 1000.0f;
+
+    // 解码x方向加速度
+    recSensor_.chassis_x_accelerate =
+        ((recv_buff_.buff[6] << 8 | recv_buff_.buff[7]) - 5000.0f) / 1000.0f;
+
+    // 解码y方向加速度
+    recSensor_.chassis_y_accelerate =
+        ((recv_buff_.buff[8] << 8 | recv_buff_.buff[9]) - 5000.0f) / 1000.0f;
+
+    // 解码yaw角（单位：度）
+    recSensor_.chassis_yaw =
+        ((recv_buff_.buff[10] << 8 | recv_buff_.buff[11]) - 18000.0f) / 100.0f;
+
+    // 解析4字节时间戳，[12][13][14][15]
+    recSensor_.time_stamp_10us =
+        (static_cast<uint32_t>(recv_buff_.buff[12]) << 24) |
+        (static_cast<uint32_t>(recv_buff_.buff[13]) << 16) |
+        (static_cast<uint32_t>(recv_buff_.buff[14]) << 8)  |
+        (static_cast<uint32_t>(recv_buff_.buff[15]));
 }
 
-// 发布传感器消息
+/**
+ * @brief 定时发布底盘传感器消息
+ * 将 recSensor_ 中的解析结果转换为 ROS 消息后发布
+ */
 void usartConfig::PubSensor_DataSendCallback(const ros::TimerEvent &)
 {
-  // 坐标系不太一样修改一下
-  chassiSensor.local_x_Veloc = recSensor.chassix_x_linear_velocity;
-  chassiSensor.local_y_Veloc = recSensor.chassis_y_linear_velocity;
+    // 将内部解析数据写入ROS消息
+    chassiSensor_.local_x_Veloc = recSensor_.chassix_x_linear_velocity;
+    chassiSensor_.local_y_Veloc = recSensor_.chassis_y_linear_velocity;
 
-  chassiSensor.local_x_Accel = recSensor.chassis_x_accelerate;
-  chassiSensor.local_y_Accel = recSensor.chassis_y_accelerate;
+    chassiSensor_.local_x_Accel = recSensor_.chassis_x_accelerate;
+    chassiSensor_.local_y_Accel = recSensor_.chassis_y_accelerate;
 
-  // 转换成弧度制
-  chassiSensor.yaw = recSensor.chassis_yaw/57.3f;
+    // yaw 转成弧度发布
+    chassiSensor_.yaw = recSensor_.chassis_yaw / 57.2957795f;
 
-  chassiSensor.timeStamp_10us = recSensor.time_stamp_10us;
-  SensorDataPub.publish(chassiSensor);
+    // 时间戳直接赋值
+    chassiSensor_.timeStamp_10us = recSensor_.time_stamp_10us;
+
+    // 发布话题
+    SensorDataPub_.publish(chassiSensor_);
+
+    // 每隔1秒打印一次当前发布的数据，便于调试
+    ROS_INFO_THROTTLE(1.0,
+                  "pub sensor: vx=%.3f vy=%.3f ax=%.3f ay=%.3f yaw=%.3f ts=%u",
+                  chassiSensor_.local_x_Veloc,
+                  chassiSensor_.local_y_Veloc,
+                  chassiSensor_.local_x_Accel,
+                  chassiSensor_.local_y_Accel,
+                  chassiSensor_.yaw,
+                  chassiSensor_.timeStamp_10us);
 }
 
-// 全局速度消息订阅
+/**
+ * @brief 订阅全局速度控制消息回调
+ * @param msg 来自 /acl_velocity 的底盘控制消息
+ */
 void usartConfig::GlobalVelSubCallback(const robot_communication::chassisControlConstPtr &msg)
 {
-  controlMotion = *msg;
-
-  //cout<<controlMotion<<endl;
+    controlMotion_ = *msg;
 }
 
-// 串口发送函数 controlCmdSendCallback()
+/**
+ * @brief 订阅 /cmd_vel_auto 的回调函数
+ * 将 geometry_msgs::Twist 转换为内部控制结构体
+ * @param msg Twist消息
+ */
 void usartConfig::CmdVelCallback(const geometry_msgs::TwistConstPtr &msg)
 {
-  // 按你的串口发送格式填充 controlMotion
-  controlMotion.xSpeed = msg->linear.x;
-  controlMotion.ySpeed = msg->linear.y;
+    // 线速度
+    controlMotion_.xSpeed = msg->linear.x;
+    controlMotion_.ySpeed = msg->linear.y;
 
-  // 角度/角速度（如果你底盘不需要角度，就先置 0）
-  controlMotion.chassisAngle = 0.0;
-  controlMotion.chassisGyro  = msg->angular.z;
+    // 当前版本中底盘角度不从cmd_vel传入，这里固定为0
+    controlMotion_.chassisAngle = 0.0;
 
-  cout << controlMotion << endl;
+    // 将角速度 z 赋值给底盘角速度
+    controlMotion_.chassisGyro = msg->angular.z;
 }
 
+/**
+ * @brief 统计串口接收频率
+ * 当前函数保留，用于调试接收频率和平均成功率
+ */
+void usartConfig::displayUsartFreq(void)
+{
+    freqFlag_ = 1;
+    static uint32_t i = 0, time = 0, num = 0;
+    static uint64_t flagSucc = 0;
 
+    i++;
+    if (i >= 1000)
+    {
+        if (freq_ >= 1000)
+        {
+            freq_ = 0;
+        }
 
+        i = 0;
+        if (freq_ > 0)
+        {
+            flagSucc += freq_;
+            num++;
+            std::cout << static_cast<float>(flagSucc / num) << std::endl;
+        }
 
+        ROS_WARN("%d", freq_);
+        freq_ = 0;
+        time++;
+        std::cout << time << std::endl;
+    }
+}
