@@ -40,4 +40,14 @@ target_link_libraries(odom_tf_basefootprint
   ${catkin_LIBRARIES}
 )
 
+# 手写的键盘控制节点指令在终端进行显示
+add_executable(odom_tf_basefootprint_gazebo src/odom_tf_basefootprint_gazebo.cpp)
+target_link_libraries(odom_tf_basefootprint_gazebo
+  ${catkin_LIBRARIES}
+)
+add_dependencies(odom_tf_basefootprint_gazebo
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+
 

@@ -12,7 +12,7 @@ public:
     ros::NodeHandle nh;
 
     // 订阅 Gazebo 真值位姿
-    truth_sub_ = nh.subscribe("/carto_odom", 10,
+    truth_sub_ = nh.subscribe("/truthPose", 10,
                               &OdomFromTruth::truthCallback, this);
 
     // 发布 odom
@@ -59,7 +59,7 @@ private:
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "odom_from_truth");
+  ros::init(argc, argv, "odom_from_gazebo");
   OdomFromTruth node;
   ros::spin();
   return 0;
