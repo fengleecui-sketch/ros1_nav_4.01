@@ -125,6 +125,8 @@ public:
   void target_velocity_callback(const geometry_msgs::TwistConstPtr &global);
   // 正常里程计消息回调函数
   void odom_callback(const robot_communication::localizationInfoBroadcastConstPtr &msg);
+  // gazebo里程计消息回调函数
+  void odomCb(const nav_msgs::OdometryConstPtr& msg);
   // 用于接收终点信息
   void clickCallback(const geometry_msgs::PoseStampedConstPtr &msg);
   // 路径回调函数

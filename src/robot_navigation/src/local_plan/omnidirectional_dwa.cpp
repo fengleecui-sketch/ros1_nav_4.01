@@ -65,7 +65,8 @@ Omnidirectional_DWAPlanner::Omnidirectional_DWAPlanner(void)
   }
   else
   {
-    odom_sub = nh.subscribe("/truth_pose_odom", 1, &Omnidirectional_DWAPlanner::odom_callback, this);
+    odom_sub = nh.subscribe("/truthPose", 1, &Omnidirectional_DWAPlanner::odomCb, this);
+    //odom_sub = nh.subscribe("/truth_pose_odom", 1, &Omnidirectional_DWAPlanner::odom_callback, this);
   }
 
   // pid参数初始化
@@ -162,6 +163,23 @@ void Omnidirectional_DWAPlanner::odom_callback(const robot_communication::locali
 
   odom_updated = true;
 }
+
+  // 取当前位姿 (x,y,yaw)
+  void Omnidirectional_DWAPlanner::odomCb(const nav_msgs::OdometryConstPtr& msg)
+  {
+    nowposition[0] = msg->pose.pose.position.x;
+    nowposition[1] = msg->pose.pose.position.y;
+    nowposition[2] = tf::getYaw(msg->pose.pose.orientation);
+
+    current_velocity.linear.x = msg->twist.twist.linear.x;
+    current_velocity.linear.y = msg->twist.twist.linear.y;
+    current_velocity.angular.z = msg->twist.twist.angular.z;
+
+    odom_updated = true;
+  }
+
+
+
 
 // 路径回调函数
 void Omnidirectional_DWAPlanner::pathCallback(const nav_msgs::PathConstPtr &path)
@@ -486,9 +504,9 @@ vector<Omnidirectional_DWAPlanner::State> Omnidirectional_DWAPlanner::dwa_planni
   temp_velocity.linear.x = TARGET_VELOCITY[0];
   temp_velocity.linear.y = TARGET_VELOCITY[1];
   temp_velocity.angular.z = 0;
-  Window target_velocity_window = calc_dynamic_window(temp_velocity);
+  // Window target_velocity_window = calc_dynamic_window(temp_velocity);
   // 进行原DWA算法的测试
-  // Window target_velocity_window = calc_dynamic_window(current_velocity);
+  Window target_velocity_window = calc_dynamic_window(current_velocity);
 
   ros::Time calobstacle_time_start = ros::Time::now();
   // 对速度状态空间采样
@@ -603,7 +621,7 @@ vector<Omnidirectional_DWAPlanner::State> Omnidirectional_DWAPlanner::dwa_planni
         Vector2i now_pos = Vector2i(0,0);
         int8_t now_pos_esdf = getESDFvalue(now_pos);
         
-        if(vel_angle >= M_PI/3)
+        if(vel_angle >= M_PI/2)
         {
           obstacle_cost = 1e6;
         }
@@ -965,17 +983,22 @@ Omnidirectional_DWAPlanner::Window Omnidirectional_DWAPlanner::calc_dynamic_wind
 
 float Omnidirectional_DWAPlanner::calc_to_goal_cost(const vector<State> &traj, const Eigen::Vector3d &goal)
 {
-  float last_cost = 0.0;
-  for (int i = 0; i < traj.size(); i++)
-  {
-    /* code */
-    Eigen::Vector3d position(traj[i].x, traj[i].y,traj[i].yaw);
-    float cost = (position.segment(0, 2) - goal.segment(0, 2)).norm();
-    last_cost += cost;
-  }
-  // 计算轨迹上最后一个点到临时终点的代价
-  // Eigen::Vector3d position(traj[traj.size()-1].x, traj[traj.size()-1].y,traj[traj.size()-1].yaw);
-  // last_cost = (position.segment(0, 2) - goal.segment(0, 2)).norm();  
+  // 1. 获取全局目标点与当前位置的差值
+  double dx = goal[0] - nowposition[0];
+  double dy = goal[1] - nowposition[1];
+  double yaw = nowposition[2];
+
+  // 2. 将全局目标点转换到机器人的局部坐标系下 (旋转平移矩阵)
+  double local_goal_x = dx * cos(yaw) + dy * sin(yaw);
+  double local_goal_y = -dx * sin(yaw) + dy * cos(yaw);
+  
+  Eigen::Vector2d local_goal(local_goal_x, local_goal_y);
+
+  // 3. 提取轨迹最后一个点（已经在局部坐标系下）
+  Eigen::Vector2d traj_end(traj.back().x, traj.back().y);
+
+  // 4. 计算两点之间的真实欧氏距离
+  float last_cost = (traj_end - local_goal).norm();  
   return last_cost;
 }
 
