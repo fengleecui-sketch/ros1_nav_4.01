@@ -121,7 +121,9 @@ public:
     }
     else
     {
-      odom_carto_sub_ = nh_.subscribe("/carto_odom", 1, &OmnidirectionalPIDLocalPlanner::odomCb, this);
+      //odom_carto_sub_ = nh_.subscribe("/carto_odom", 1, &OmnidirectionalPIDLocalPlanner::odomCb, this);
+
+      odom_carto_sub_ = nh_.subscribe("/truthPose", 1, &OmnidirectionalPIDLocalPlanner::odomCb, this);
     }
 
     cmd_pub_ = nh_.advertise<geometry_msgs::Twist>("/cmd_vel_auto", 1);

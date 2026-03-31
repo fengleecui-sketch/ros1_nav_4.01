@@ -155,7 +155,9 @@ void motionPlan::motionInit(void)
     // 订阅定位消息 carto_odom
     //localizationSub = motPlan.subscribe("/odom_carto", 10, &motionPlan::localizationCallback, this);
     //订阅mid360雷达的位置消息
-    localizationSub = motPlan.subscribe("/carto_odom", 10, &motionPlan::localizationCallback_mid360, this);
+    //localizationSub = motPlan.subscribe("/carto_odom", 10, &motionPlan::localizationCallback_mid360, this);
+      //订阅gazebo雷达的位置消息
+    localizationSub = motPlan.subscribe("/truthPose", 10, &motionPlan::localizationCallback_mid360, this);
   
   }
   else

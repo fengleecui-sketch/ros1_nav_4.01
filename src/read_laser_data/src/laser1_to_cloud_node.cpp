@@ -30,7 +30,7 @@ private:
   ros::Publisher rotated_scan_publisher_;
   ros::Subscriber scan_sub_;
 
-  // ======= ✅ 你自己写死的旋转（单位：弧度）=======
+  // ======= 你自己写死的旋转（单位：弧度）=======
   // 常见翻转：
   //  - 绕 X 翻 180°： roll = M_PI
   //  - 绕 Y 翻 180°： pitch = M_PI

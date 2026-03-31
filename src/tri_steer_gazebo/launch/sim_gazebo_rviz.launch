@@ -8,7 +8,7 @@
 
   <!-- 机器人模型 -->
   <param name="robot_description"
-      command="$(find xacro)/xacro --inorder '$(find tri_steer_description)/urdf/tri_steer.xacro'"/>
+      command="$(find xacro)/xacro --inorder '$(find tri_steer_description)/urdf/tri_steer_gazebo.xacro'"/>
 
   <!-- 发布 TF（关节角来自 Gazebo） -->
   <node pkg="robot_state_publisher"
@@ -47,9 +47,7 @@
  
   <node pkg="tf2_ros" type="static_transform_publisher" name="link_broadcaster" args="0 0 0 0 0 0 map odom" />
 
-  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="odom_to_basefootprint" args="0 0 0 0 0 0 odom base_footprint" /> -->
-
-    <!-- 发布 odom->base_footprint（订阅 truthPose 并转发 /odom + TF） -->
+<!-- 发布 odom->odom_tf_basefootprint_gazebo // truthPose 并转发 /odom + TF） -->
   <node pkg="tri_steer_gazebo"
       type="odom_tf_basefootprint_gazebo"
       name="odom_tf_basefootprint_gazebo"
