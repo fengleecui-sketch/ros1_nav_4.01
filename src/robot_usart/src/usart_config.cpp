@@ -80,6 +80,7 @@ void usartConfig::ConfigSerialPort()
 {
     // 读取串口设备名，默认 /dev/ttyUSB0
     private_node_.param<std::string>("port_name", port_name_, std::string("/dev/ttyUSB0"));
+    
 
     // 读取波特率，默认 460800
     private_node_.param<int>("baud_rate", baud_rate_, 460800);

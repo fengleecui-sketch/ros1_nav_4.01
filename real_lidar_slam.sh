@@ -24,13 +24,13 @@ gnome-terminal -t "carto_odom_start" -- bash -lc "source ~/Gitdesktop/ros1_nav20
 sleep 2
 
 #订阅雷达的消息转化为cloud
- gnome-terminal -t "cloud start" -- bash -lc "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch scan_to_cloud scan_to_cloud.launch; exec bash"
+gnome-terminal -t "cloud start" -- bash -lc "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch scan_to_cloud scan_to_cloud.launch; exec bash"
 # 5）启动地图节点
 gnome-terminal -t "map start" -- bash -lc "source ~/Gitkraken/ros1_slam/devel/setup.bash; roslaunch robot_costmap map_deal.launch;exec bash"
 # 6) 运动规划节点
- gnome-terminal -t "motion Plan start" -- bash -lc "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch robot_navigation motionPlan_acl.launch"
+gnome-terminal -t "motion Plan start" -- bash -lc "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch robot_navigation motionPlan_acl.launch"
 # 7）局部规划pid算法
- gnome-terminal -t "PID_control" -- bash -c "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch robot_pid_local_planner Omnidirectional_PID.launch; exec bash"
+gnome-terminal -t "PID_control" -- bash -c "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch robot_pid_local_planner Omnidirectional_PID.launch; exec bash"
 
 
 # 8）订阅控制消息

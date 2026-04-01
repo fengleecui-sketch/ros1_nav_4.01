@@ -31,6 +31,7 @@ gnome-terminal -t "map_start" -- bash -lc "source ~/Gitdesktop/ros1_nav2026/deve
 gnome-terminal -t "motion Plan start" -- bash -lc "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch robot_navigation motionPlan_sim.launch"
 # 7）局部规划pid算法
 #gnome-terminal -t "PID_control" -- bash -c "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch robot_pid_local_planner Omnidirectional_PID.launch; exec bash"
+# 7）局部规划pid算法
 gnome-terminal -t "DWA_control" -- bash -c "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch robot_navigation Omnidirectional_DWA.launch; exec bash"
 # 解析carto算法发布的tf变换到机器人 Omnidirectional_DWA_node
 #gnome-terminal -t "carto_odom_start" -- bash -lc "source ~/Gitdesktop/ros1_nav2026/devel/setup.bash; roslaunch carto_tf_to_odom carto_tf_to_odom.launch; exec bash"
