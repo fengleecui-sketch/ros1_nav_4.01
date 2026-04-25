@@ -200,3 +200,14 @@ roslaunch livox_cloud_to_scan cloud_to_scan.launch"
 
 source ~/ros1_slam/devel/setup.bash
 roslaunch robot_usart usart_node.launch
+
+
+ 加入github仓库步骤
+git init
+git config --global user.email "fengleecui@gmail.com"
+git config --global user.name "Cuifengle"
+git add .
+git commit -m "首次提交"
+git branch -M main
+git remote add origin https://github.com/fengleecui-sketch/你的仓库名.git
+git push -u origin main
