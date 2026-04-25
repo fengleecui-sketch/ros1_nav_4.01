@@ -13,24 +13,24 @@ until rostopic list >/dev/null 2>&1; do
 done
 
 #  # 3) 启动 Gazebo + robot
-# gnome-terminal --title="gazebo_start" -- bash -c "source ~/Gitkraken/ros1_slam/devel/setup.bash; roslaunch tri_steer_gazebo carto_test.launch"
+# gnome-terminal --title="gazebo_start" -- bash -c "source ~/ros1_slam/devel/setup.bash; roslaunch tri_steer_gazebo carto_test.launch"
 
 # # # 7) 雷达点云反转成水平车体下的point-cloud2
-# gnome-terminal -t "laser to cloud" -- bash -lc "source ~/Gitkraken/ros1_slam/devel/setup.bash; roslaunch read_laser_data laser_to_cloud.launch; exec bash"
+# gnome-terminal -t "laser to cloud" -- bash -lc "source ~/ros1_slam/devel/setup.bash; roslaunch read_laser_data laser_to_cloud.launch; exec bash"
 
 # # 10）订阅控制消息
-# gnome-terminal -t "control  start" -- bash -lc "source ~/Gitkraken/ros1_slam/devel/setup.bash; roslaunch tri_steer_drive bringup.launch use_teleop:=true;exec bash"
+# gnome-terminal -t "control  start" -- bash -lc "source ~/ros1_slam/devel/setup.bash; roslaunch tri_steer_drive bringup.launch use_teleop:=true;exec bash"
 
 # # 3) 启动 激光雷达
 gnome-terminal --title="lider_start" -- bash -c \
-"source ~/Gitkraken/ws_livox/devel/setup.bash;roslaunch livox_ros_driver2 rviz_msg_MID360.launch rviz_enable:=false"
+"source ~/ws_livox/devel/setup.bash;roslaunch livox_ros_driver2 rviz_msg_MID360.launch rviz_enable:=false"
 # # roslaunch livox_ros_driver2 msg_MID360.launch"rviz_MID360
 
 # sleep 2
 
 # # 3) 激光雷达数据转换成2d
 gnome-terminal --title="lider_msg_convert" -- bash -c \
-"source ~/Gitkraken/ros1_slam/devel/setup.bash; 
+"source ~/ros1_slam/devel/setup.bash; 
 roslaunch livox_cloud_to_scan cloud_to_scan.launch"
 
 # 启动cartographer建图节点

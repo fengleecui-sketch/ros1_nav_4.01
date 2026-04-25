@@ -22,7 +22,8 @@
 #include "fstream"
 
 #define OCCUPIED 100  //根据ROS中的地图消息格式，最大数值是100即为障碍物
-#define VISITED 1     //被访问的设置为1
+//#define STATE_VISITED 1     //被访问的设置为1
+#define STATE_STATE_VISITED 1
 #define PI 3.1415926
 
 // 宏函数定义：限制数值在指定范围内
@@ -36,6 +37,8 @@ using namespace math_tools;
 class Fast_Security
 {
 private:
+
+ros::Publisher corridorPub;
   // 连续部分系数
   // 连续部分距离势场系数
   double Kcontinu_esdf; 
@@ -219,11 +222,11 @@ private:
   // 判断点是否被占据的具体实现形式
   bool isOccupied(const Vector2i gridpt) const;
   // 设定访问过的点为1
-  void setVisited(const Vector2i gridpt);
+  void setSTATE_VISITED(const Vector2i gridpt);
   // 判断点是否重复
   bool isRepeated(const Vector2i gridpt) const;
   // 获取访问的次数
-  int getVisitedNum(const Vector2i gridpt) const;
+  int getSTATE_VISITEDNum(const Vector2i gridpt) const;
   // 获取当前点的势场数值
   int8_t getESDFvalue(Vector2i gridpt);
   // 判断向量是否共线
@@ -336,7 +339,7 @@ vector<Vector2i> &after1Extension,vector<Vector2i> &after2Extension);
   // interpolatpath 插值路径
   void Setlength_Interpolation_Path(double length,vector<Vector2i> oldpath,vector<Vector2i> &newpath);
 
-  void visual_VisitedNode(ros::Publisher pathPublish, std::vector<Eigen::Vector2d> visitnodes,
+  void visual_STATE_VISITEDNode(ros::Publisher pathPublish, std::vector<Eigen::Vector2d> visitnodes,
 float a_set,float r_set,float g_set,float b_set,float length);
 
   // 可视化采样点集合
@@ -363,11 +366,14 @@ public:
   void SetMapParams(double resolution_,double origin_x_,double origin_y_,
                     int map_x_size,int map_y_size,std::vector<int8_t> _mapData);
 
+          
+  void visual_Corridor_Polygons(const std::vector<std::vector<Vector2d>>& polygons,
+                                   float r, float g, float b, float a);                  
   // 用于传参
   void InitParams(ros::NodeHandle &nh);
 
   // 复位访问的节点
-  void resetVisited(void);
+  void resetSTATE_VISITED(void);
 
   // 用于查看各种节点路径可视化
   void visualNodes(void);
@@ -384,7 +390,7 @@ public:
   // vector<Vector2d> Fast_Security_Replan(vector<Vector2d> oripath);
 
   // 获取走廊访问的节点
-  int getCorridorVisitedNum(void);
+  int getCorridorSTATE_VISITEDNum(void);
 
   // 获取最终优化过的路径的长度
   double getOptedPathLength(void);

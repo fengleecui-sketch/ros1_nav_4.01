@@ -1,19 +1,49 @@
+# VELOCITY_RESOLUTION: 0.1
+# YAWRATE_RESOLUTION: 0.1
+# # 预测时间2.0
+# PREDICT_TIME: 2.0
+
+# # 到目标终点的代价系数
+# TO_GOAL_COST_GAIN: 5.0
+# # 速度的代价系数
+# SPEED_COST_GAIN: 1.0
+# # 障碍物的代价系数
+# OBSTACLE_COST_GAIN: 1.0
+
+# ANGLE_RESOLUTION: 0.0087
+# MAX_DIST: 2.0
+# GOAL_THRESHOLD: 0.3
+# TURN_DIRECTION_THRESHOLD: 0.1
+# TEMP_GOAL_RADIUS: 3.0
+
+# ================= 【核心修改区】 =================
+
+# 1. 临时目标半径 (前瞻距离) —— 罪魁祸首！
+# 原值: 3.0 (看前方3米，必定疯狂切弯出轨)
+# 新值: 0.8 (让它变成高度近视，只盯着脚下0.8米处的绿线走，死死咬住路径)
+TEMP_GOAL_RADIUS: 0.8
+
+# 2. 障碍物的代价系数 —— 必须提高！
+# 原值: 1.0 (不怕死，敢于贴墙)
+# 新值: 10.0 (让它极度害怕走廊边缘的膨胀区，强行把它挤在走廊最中间)
+OBSTACLE_COST_GAIN: 10.0
+
+# 3. 预测时间 —— 适当缩短
+# 原值: 2.0 (规划未来2秒，容易发散)
+# 新值: 1.2 (只规划未来1.2秒，见好就收，避免预测轨迹飘出走廊)
+PREDICT_TIME: 1.2
+
+# 4. 到目标终点的代价系数 —— 保持或微调
+# 原值: 5.0
+TO_GOAL_COST_GAIN: 3.0 # 稍微降一点点，因为避障权重提到了10，我们要平衡一下
+
+# 5. 速度的代价系数 —— 保持不变
+SPEED_COST_GAIN: 1.0
+
+# ================= 【其他参数保持不变】 =================
 VELOCITY_RESOLUTION: 0.1
 YAWRATE_RESOLUTION: 0.1
-# 预测时间2.0
-PREDICT_TIME: 2.0
-
-# 到目标终点的代价系数
-TO_GOAL_COST_GAIN: 5.0
-# 速度的代价系数
-SPEED_COST_GAIN: 1.0
-# 障碍物的代价系数
-OBSTACLE_COST_GAIN: 1.0
-
-
-
 ANGLE_RESOLUTION: 0.0087
 MAX_DIST: 2.0
 GOAL_THRESHOLD: 0.3
 TURN_DIRECTION_THRESHOLD: 0.1
-TEMP_GOAL_RADIUS: 3.0

@@ -24,7 +24,7 @@ done
 
 # 3) 启动 激光雷达
 gnome-terminal --title="lider_start" -- bash -c \
-"source ~/Gitkraken/ws_livox/devel/setup.bash;
+"source ~/ws_livox/devel/setup.bash;
 
 roslaunch livox_ros_driver2 rviz_msg_MID360.launch rviz_enable:=false"
 # roslaunch livox_ros_driver2 msg_MID360.launch"rviz_MID360
@@ -32,11 +32,11 @@ roslaunch livox_ros_driver2 rviz_msg_MID360.launch rviz_enable:=false"
 sleep 2
 
 # gnome-terminal --title="mapping_start" -- bash -c \
-# "source ~/Gitkraken/ws_livox/devel/setup.bash; 
+# "source ~/ws_livox/devel/setup.bash; 
 # roslaunch fast_lio mapping_mid360.launch
 
 # 3) 激光雷达数据转换成2d
 gnome-terminal --title="lider_msg_convert" -- bash -c \
-"source ~/Gitkraken/ros1_slam/devel/setup.bash; 
+"source ~/ros1_slam/devel/setup.bash; 
 roslaunch livox_cloud_to_scan cloud_to_scan.launch"
 

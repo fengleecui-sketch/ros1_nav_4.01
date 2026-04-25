@@ -139,6 +139,10 @@ void motionPlan::motionInit(void)
   fast_security_opt.reset(new Fast_Security);
   fast_security_opt->InitParams(private_node);
 
+  // Corridor_Optimizer初始化-初始化安全优化模块
+  corridor_opt.reset(new Corridor_Optimizer);
+  corridor_opt->InitParams(private_node);
+
   // 订阅静态地图
   staticMap = motPlan.subscribe("/global_map_esdf_display", 10, &motionPlan::staticMapCallback, this);
   // staticMap = motPlan.subscribe("/local_map_esdf", 10, &motionPlan::staticMapCallback, this);
@@ -688,6 +692,9 @@ void motionPlan::staticMapCallback(const nav_msgs::OccupancyGrid::ConstPtr &msg)
     // 设定地图参数
     fast_security_opt->SetMapParams(pathNav.resolution, pathNav.origin_x, pathNav.origin_y,
                               pathNav.width, pathNav.height,msg->data);
+    corridor_opt->updateMap(pathNav.resolution, pathNav.origin_x, pathNav.origin_y,
+                            pathNav.width, pathNav.height, pathNav.mapData);
+
   }
   if(control_method == 2)
   {
@@ -853,39 +860,73 @@ void motionPlan::pathPlanning(Eigen::Vector2d startMapPoint, Eigen::Vector2d goa
         // PublishPath(optPathPub,pathNav.optpath);
         // visual_VisitedNode(optpathNodePub,pathNav.optpath,1,1,0.5,0.1,2);
 
-        // 使用过的地图复位
+        // // 使用过的地图复位
+        // astar_esdf_path_finder->resetUsedGrids();
+        // // 记录路径搜索需要的时间
+        // ros::Time time_5 = ros::Time::now();
+        // // 开始路径搜索
+        // astar_esdf_path_finder->AstarWorldSearch(startMapPoint,goalMapPoint);
+        // // 获取astar_esdf搜索到的路径
+        // vector<Vector2d> World_Path = astar_esdf_path_finder->getWorldPath();
+        // pathNav.worldpath = astar_esdf_path_finder->getWorldPath();
+        // World_Path = astar_esdf_path_finder->getSamples(0.5);
+
+        // pathNav.optpath = MinimumSnapFlow.Minimum_Snap(World_Path);
+        // ros::Time time_6 = ros::Time::now();
+        // cout<<"astar_esdf 扩展总的栅格数目: "<<astar_esdf_path_finder->getVisitedNodesNum()<<endl;
+        // cout<<"astar_esdf 优化的路径长度: "<<astar_esdf_path_finder->getWorldPathLength()<<" m"<<endl;
+        // ROS_WARN("astar esdf search time is: %f ms",(time_6-time_5).toSec() * 1000.0);
+
+        // PublishPath(oriPathPub,pathNav.worldpath); // 发布路径
+        // PublishPath(optPathPub,pathNav.optpath);
+        // ==================【替换为新的代码】==================
+        // 1. 使用过的地图复位并进行 A* 搜索
+        // 1. 使用过的地图复位并进行 A* 搜索
         astar_esdf_path_finder->resetUsedGrids();
-        // 记录路径搜索需要的时间
-        ros::Time time_5 = ros::Time::now();
-        // 开始路径搜索
-        astar_esdf_path_finder->AstarWorldSearch(startMapPoint,goalMapPoint);
-        // 获取astar_esdf搜索到的路径
-        vector<Vector2d> World_Path = astar_esdf_path_finder->getWorldPath();
+        ros::Time time_astar_start = ros::Time::now();
+        
+        astar_esdf_path_finder->AstarWorldSearch(startMapPoint, goalMapPoint);
         pathNav.worldpath = astar_esdf_path_finder->getWorldPath();
-        World_Path = astar_esdf_path_finder->getSamples(0.5);
+        
+        ros::Time time_astar_end = ros::Time::now();
+        ROS_WARN("A* Search time is: %f ms", (time_astar_end - time_astar_start).toSec() * 1000.0);
 
-        pathNav.optpath = MinimumSnapFlow.Minimum_Snap(World_Path);
-        ros::Time time_6 = ros::Time::now();
-        cout<<"astar_esdf 扩展总的栅格数目: "<<astar_esdf_path_finder->getVisitedNodesNum()<<endl;
-        cout<<"astar_esdf 优化的路径长度: "<<astar_esdf_path_finder->getWorldPathLength()<<" m"<<endl;
-        ROS_WARN("astar esdf search time is: %f ms",(time_6-time_5).toSec() * 1000.0);
+        // 发布原始的 A* 路径 (RViz里的红线)
+        PublishPath(oriPathPub, pathNav.worldpath); 
 
-        PublishPath(oriPathPub,pathNav.worldpath); // 发布路径
-        PublishPath(optPathPub,pathNav.optpath);
-
-        if(pathNav.optpath.size() > 0)
-        {
-          getEndFlag = false;
+        // ================= 【核心装甲：拦截空路径和过短路径】 =================
+        // 如果 A* 没找到路，或者路太短（无法构成曲线），直接拦截！
+        if (pathNav.worldpath.size() < 3) {
+            ROS_ERROR("A* 寻路失败或路径太短！(点数: %zu)，跳过走廊优化，防止 OSQP 崩溃！", pathNav.worldpath.size());
+            pathNav.optpath.clear(); // 清空上次的优化路径
+            PublishPath(optPathPub, pathNav.optpath); // 发布空路径清空 RViz 的蓝线
+            getEndFlag = false;      // 复位标志位，等待下一次点击
+            return;                  // 强行中断，退出当前规划回合
         }
+        // =================================================================
+
+        // 2. 只有 A* 成功找到了 3 个点以上的路径，才开始安全走廊优化
+        ros::Time time_opt_start = ros::Time::now();
+
+        pathNav.optpath = corridor_opt->optimizePathWithCorridor(pathNav.worldpath);
+
+        ros::Time time_opt_end = ros::Time::now();
+        ROS_WARN("Corridor Optimization time is: %f ms", (time_opt_end - time_opt_start).toSec() * 1000.0);
+
+        // 发布最终优化后的平滑路径 (RViz里的蓝线)
+        PublishPath(optPathPub, pathNav.optpath);
+
+        // 3. 规划成功，复位标志位
+        getEndFlag = false; 
       }
       else
       {
-        PublishPath(oriPathPub,pathNav.worldpath); // 发布路径
-        PublishPath(optPathPub,pathNav.optpath);
+        // getEndFlag == false 时的常规发布维持原样
+        PublishPath(oriPathPub, pathNav.worldpath);
+        PublishPath(optPathPub, pathNav.optpath);
       }
     }
   }
-  
   // 使用Hybrid astar进行规划
   else if(control_method == 2)
   {

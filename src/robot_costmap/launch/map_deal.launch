@@ -16,7 +16,7 @@
     <param name="local_cost_map/costupvalue" value="80" type="int" />
     <!-- 设定局部代价地图上下阈值系数 , 这两个系数与上下阈值的乘积不能超过100 -->
     <param name="local_cost_map/costdownk" value="1.0" type="double" />
-    <param name="local_cost_map/costupk" value="1.0" type="double" />
+    <param name="local_cost_map/costupk" value="0.5" type="double" />
 
     <!-- 仿真还是真实场景运行，仿真需要对雷达点云进行坐标变换，真实运行使用的是Carto变换好的数据直接用就行 -->
     <param name="local_map/is_use_sim" value="true" type="bool" />
@@ -25,9 +25,9 @@
     <param name="local_map/ymin" value="-4.0" type="double" />
     <param name="local_map/xmax" value="4.0" type="double" />
     <param name="local_map/ymax" value="4.0" type="double" />
-    <param name="local_map/resolution" value="0.1" type="double" />
+    <param name="local_map/resolution" value="0.05" type="double" />
     <!-- 膨胀地图半径 -->
-    <param name="local_map/inflate" value="0.40" type="double" />
+    <param name="local_map/inflate" value="0.15" type="double" />
     <!-- 虚拟地图尺寸大小 -->
     <param name="local_map/virtual_map" value="1" type="double" />
 

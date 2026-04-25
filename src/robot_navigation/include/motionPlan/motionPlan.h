@@ -57,6 +57,8 @@ using namespace chrono;
 #include "robot_communication/ESDFmap.h"
 #include "robot_communication/goal.h"
 
+// 包含安全优化包
+#include "path_optimization/corridor_optimizer.h"
 
 using namespace dyn_planner;
 
@@ -117,6 +119,9 @@ private:
 
   //使用Fast_Secutity 优化路径
   Fast_Security::Ptr fast_security_opt;  
+  
+  // 使用Corridor_Optimizer优化路径(4.11更新)
+  Corridor_Optimizer::Ptr corridor_opt;
 
   Eigen::Vector2d startPoint;
   Eigen::Vector2d endPoint;

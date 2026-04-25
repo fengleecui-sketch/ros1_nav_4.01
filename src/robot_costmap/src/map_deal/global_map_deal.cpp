@@ -109,10 +109,18 @@ void global_map_deal::MapCallback(const nav_msgs::OccupancyGrid::ConstPtr &map)
               globalinflatemap.data,
               inflate_map_);
               
-  actual_map_x = actual_map_size[0];
-  actual_map_y = actual_map_size[1];
-  actual_map_startx = actual_map_start[0];
-  actual_map_starty = actual_map_start[1];
+  // actual_map_x = actual_map_size[0];
+  // actual_map_y = actual_map_size[1];
+  // actual_map_startx = actual_map_start[0];
+  // actual_map_starty = actual_map_start[1];
+
+  // 由于现在的地图信息是全局地图的，所以实际地图尺寸就是全局地图尺寸，实际地图起点就是全局地图起点
+  actual_map_x = grid_map_x;
+  actual_map_y = grid_map_y;
+  actual_map_startx = 0;
+  actual_map_starty = 0;
+
+
 
   has_been_inflate = true;
 

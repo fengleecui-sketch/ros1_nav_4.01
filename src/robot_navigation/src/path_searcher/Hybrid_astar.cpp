@@ -1032,20 +1032,47 @@ bool Hybrid_astar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state
   return true;
 }
 
-// 状态转移
+// // 状态转移
+// void Hybrid_astar::stateTransit(Eigen::Matrix<double, 4, 1> &state0,
+//                                 Eigen::Matrix<double, 4, 1> &state1,
+//                                 Eigen::Vector2d um, double tau)
+// {
+//   // 状态传递
+//   for (int i = 0; i < 2; ++i)
+//     phi_(i, i + 2) = tau;
+
+//   // 整形矩阵
+//   Matrix<double, 4, 1> integral;
+//   integral.head(2) = 0.5 * pow(tau, 2) * um;
+//   integral.tail(2) = tau * um;
+
+//   // 状态转移
+//   state1 = phi_ * state0 + integral;
+// }
 void Hybrid_astar::stateTransit(Eigen::Matrix<double, 4, 1> &state0,
                                 Eigen::Matrix<double, 4, 1> &state1,
                                 Eigen::Vector2d um, double tau)
 {
-  // 状态传递
-  for (int i = 0; i < 2; ++i)
-    phi_(i, i + 2) = tau;
+  // ===================== 三角舵轮 全向运动学 =====================
+  double x   = state0(0);    // X坐标
+  double y   = state0(1);    // Y坐标
+  double th  = state0(2);    // 机器人朝向角 (yaw)
+  double vel = state0(3);   // 当前速度
 
-  // 整形矩阵
-  Matrix<double, 4, 1> integral;
-  integral.head(2) = 0.5 * pow(tau, 2) * um;
-  integral.tail(2) = tau * um;
+  // 控制输入：um.x = 前向速度, um.y = 横向速度 + 自转
+  // 这里适配你原有的 Vector2d，我帮你兼容
+  double vx = um(0);    // 前
+  double vy = um(1);    // 横移
+  double w  = 0.0;      // 自转（你可以后续自己加）
 
-  // 状态转移
-  state1 = phi_ * state0 + integral;
+  // 三角全向轮 / 麦克纳姆轮 标准运动学
+  double dx = (vx * cos(th) - vy * sin(th)) * tau;
+  double dy = (vx * sin(th) + vy * cos(th)) * tau;
+  double dth = 0.0; // 如需旋转，这里改成 w * tau
+
+  // 新状态
+  state1(0) = x + dx;
+  state1(1) = y + dy;
+  state1(2) = th + dth;
+  state1(3) = sqrt(vx*vx + vy*vy);
 }

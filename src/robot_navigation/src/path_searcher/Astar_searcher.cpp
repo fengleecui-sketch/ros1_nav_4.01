@@ -371,17 +371,18 @@ double AstarPathFinder::getHeu(GridNodePtr node1, GridNodePtr node2)
 		double p = 1 / 25;
 		h = h * (1.0 + p);
 	}
-	double obs_num = 0.0;
-	if(is_use_esdf == true)
-	{
-		obs_num = (double)(data[start_index(0)*Y_SIZE + start_index(1)]);
-	}
-	else{
-		obs_num = 0;
-	}
+	// double obs_num = 0.0;
+	// if(is_use_esdf == true)
+	// {
+	// 	obs_num = (double)(data[start_index(0)*Y_SIZE + start_index(1)]);
+	// }
+	// else{
+	// 	obs_num = 0;
+	// }
 
-	// cout<<"obs_num:"<<obs_num<<endl;
-	return h + obs_num; // 返回计算出来的规划轨迹距离
+	// // cout<<"obs_num:"<<obs_num<<endl;
+	// return h + obs_num; // 返回计算出来的规划轨迹距离
+	return h; // 返回计算出来的规划轨迹距离
 }
 
 double AstarPathFinder::getGhi(GridNodePtr node1, GridNodePtr node2)
@@ -473,6 +474,179 @@ bool AstarPathFinder::StartOrEndValidCheck(Vector2d startpoint, Vector2d endpoin
 }
 
 // A*路径搜索
+// int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
+// {
+// 	// 记录路径搜索需要的时间
+// 	uint64_t time_1 = getSystemNSec();
+
+//   if (isOccupied(start_pt[0], start_pt[1]))
+//   {
+//     std::cout << "start point is" << start_pt[0] << "  " << end_pt[1] << std::endl;
+//     std::cout << "failed to get a path.start point is obstacle." << std::endl;
+//     return IN_OCCUPIED;
+//   }
+//   if (isOccupied(end_pt[0], end_pt[1]))
+//   {
+//     std::cout << "target point is" << end_pt[0] << "  " << end_pt[1] << std::endl;
+//     std::cout << "failed to get a path.target point is obstacle." << std::endl;
+//     return IN_OCCUPIED;
+//   }
+
+// 	// 初始化起点和终点节点(因为前面已经初始化过，所以不需要再New)
+// 	GridNodePtr startPtr = GridNodeMap[start_pt(0)][start_pt(1)];
+// 	GridNodePtr endPtr = GridNodeMap[end_pt(0)][end_pt(1)];
+
+// 	startpoint = start_pt;
+// 	endpoint = end_pt;
+
+// 	goalIdx = end_pt;
+
+// 	// 待弹出点集
+// 	openSet.clear();
+
+// 	// 定义要弹出的节点
+// 	GridNodePtr currentPtr = NULL;
+// 	GridNodePtr neighborPtr = NULL;
+
+// 	// 计算启发函数
+// 	startPtr->gScore = 0;
+// 	startPtr->fScore = getHeu(startPtr, endPtr);
+// 	startPtr->aclDistance = 0; // 初始化已走过实际距离为0
+
+// 	// 将起点加入开集
+// 	// 自由点为0 闭集为-1 开集为1
+// 	startPtr->id = 1;
+// 	startPtr->nodeMapIt = openSet.insert(make_pair(startPtr->fScore, startPtr));
+
+// 	// 预先定义拓展队列和cost队列
+// 	vector<GridNodePtr> neighborPtrSets;
+// 	vector<double> edgeCostSets;
+// 	vector<double> aclDist;
+
+// 	// 定义搜索终点
+// 	terminatePtr = NULL;
+// 	// 定义缓冲范围
+// 	const int tolerance = ceil(1/resolution_);
+
+// 	// this is the main loop
+// 	while (!openSet.empty())
+// 	{
+// 		// 弹出最大f的节点
+// 		currentPtr = openSet.begin()->second;
+// 		currentPtr->id = -1; // 标记为闭集
+
+// 		double tempWorldx,tempWorldy;
+// 		mapToWorld(currentPtr->index(0),currentPtr->index(1),tempWorldx,tempWorldy);
+// 		double startWorldx,startWorldy;
+// 		mapToWorld(startPtr->index(0),startPtr->index(1),startWorldx,startWorldy);
+
+
+// 		// 判断是否在规划半径区域内 一个圆环范围
+// 		bool reach_horizon = sqrt(
+// 															pow(abs(tempWorldx-startWorldx),2)+
+// 															pow(abs(tempWorldy-startWorldy),2)
+// 															) >= search_radius;
+
+// 		// 接近终点
+// 		bool near_end = abs(currentPtr->index(0) - endPtr->index(0) <= tolerance) &&
+// 											abs(currentPtr->index(1) - endPtr->index(1)) <= tolerance;
+		
+// 		bool is_shot_succ_ = false;
+// 		// 达到搜索范围或者接近终点
+// 		if(reach_horizon || near_end)
+// 		{
+// 			// 终止节点等于当前节点
+// 			terminatePtr = currentPtr;
+// 			// 接近终点
+// 			if(near_end)
+// 			{
+// 				// cout<<"near end!!!"<<endl;
+// 			}
+// 		}
+
+//     // 如果到达范围
+//     if (reach_horizon)
+//     {
+// 			// 到达同一平面
+// 			std::cout << "reach horizon" << std::endl;
+// 			return REACH_HORIZON;
+//     }
+
+// 		// 从开集中移除
+// 		openSet.erase(openSet.begin());
+// 		// 获取拓展集合
+// 		AstarGetSucc(currentPtr, neighborPtrSets, edgeCostSets, aclDist);
+// 		// 遍历拓展集合
+// 		for (int i = 0; i < (int)neighborPtrSets.size(); i++)
+// 		{
+
+// 			neighborPtr = neighborPtrSets[i];
+// 			double gh = g_value * (currentPtr->gScore + edgeCostSets[i]); // 计算走过距离代价数值
+// 			/* 计算实际走过的距离 */
+// 			double aclDistance = currentPtr->aclDistance + aclDist[i];
+// 			double fh = gh + h_value * getHeu(neighborPtr, endPtr); // 总的代价数值计算
+// 			// 如果为自由节点
+// 			if (neighborPtr->id == 0)
+// 			{
+// 				// 计算相应的g和f，并加入opensets
+// 				neighborPtr->gScore = gh;
+// 				neighborPtr->fScore = fh;
+// 				neighborPtr->aclDistance = aclDistance; // 传递参数
+// 				neighborPtr->cameFrom = currentPtr;
+// 				neighborPtr->nodeMapIt = openSet.insert(make_pair(neighborPtr->fScore, neighborPtr)); // 此处注意一定要先计算和赋值完f再加入
+
+// 				// 判断是否为目标节点 改到此处为了提高代码效率 不用将所有节点加入后等弹出时发现目标再退出
+// 				if (neighborPtr->index == goalIdx)
+// 				{
+// 					uint64_t time_2 = getSystemNSec(); // 获取当前系统时间
+// 					terminatePtr = neighborPtr;
+// 					ParamsLast.time = (double)(time_2 - time_1) / 1000000.0f;
+// 					// cout<<"ParamsLast.time:"<<ParamsLast.time<<endl;
+// 					ParamsLast.dist = currentPtr->aclDistance;
+// 					findFlag = true;
+// 					return REACH_END;
+// 				}
+// 				else
+// 				{
+// 					// 标记为open list
+// 					neighborPtr->id = 1;
+// 					continue;
+// 				}
+// 			}
+// 			// id为1的话代表其为障碍物
+// 			else if (neighborPtr->id == 1)
+// 			{
+// 				// 如果邻居节点的g参数大于gh值,进行处理
+// 				if (neighborPtr->gScore > gh)
+// 				{
+// 					// 更新对应的f值
+// 					neighborPtr->gScore = gh;
+// 					neighborPtr->fScore = fh;
+// 					// 传参用于计算实际走过的距离
+// 					neighborPtr->aclDistance = aclDistance;
+// 					neighborPtr->cameFrom = currentPtr;
+// 					openSet.erase(neighborPtr->nodeMapIt); // 擦除这个节点
+// 					neighborPtr->nodeMapIt = openSet.insert(make_pair(neighborPtr->fScore, neighborPtr));
+// 				}
+// 			}
+// 			else
+// 			{
+// 				// 如果是closelist里面的则不做处理
+// 				continue;
+// 			}
+// 		}
+// 	}
+// 	// 如果搜索失败
+// 	if (ParamsLast.time > 1000000)
+// 	{
+// 		std::cout << "Time consume in Astar path finding is " << ParamsLast.time << std::endl;
+// 		std::cout << "Path find failed." << std::endl;
+// 		findFlag = false;
+// 		return NO_PATH;
+// 	}
+// }
+
+// A*路径搜索
 int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
 {
 	// 记录路径搜索需要的时间
@@ -539,7 +713,6 @@ int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
 		double startWorldx,startWorldy;
 		mapToWorld(startPtr->index(0),startPtr->index(1),startWorldx,startWorldy);
 
-
 		// 判断是否在规划半径区域内 一个圆环范围
 		bool reach_horizon = sqrt(
 															pow(abs(tempWorldx-startWorldx),2)+
@@ -566,7 +739,6 @@ int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
     // 如果到达范围
     if (reach_horizon)
     {
-			// 到达同一平面
 			std::cout << "reach horizon" << std::endl;
 			return REACH_HORIZON;
     }
@@ -578,12 +750,32 @@ int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
 		// 遍历拓展集合
 		for (int i = 0; i < (int)neighborPtrSets.size(); i++)
 		{
-
 			neighborPtr = neighborPtrSets[i];
-			double gh = g_value * (currentPtr->gScore + edgeCostSets[i]); // 计算走过距离代价数值
+
+			// ===================== 【核心修复：正确计算 G 代价】 =====================
+			// 1. 基础物理步长
+			double step_cost = edgeCostSets[i];
+
+			// 2. 叠加 ESDF 势场惩罚（真正加到 G 里！）
+			if(is_use_esdf)
+			{
+				int nx = neighborPtr->index(0);
+				int ny = neighborPtr->index(1);
+				double esdf_dist = (double)data[nx * Y_SIZE + ny];
+
+				// 惩罚系数：越大越怕墙，建议 0.3 ~ 1.5
+				double penalty_weight = 0.8;
+				step_cost += esdf_dist * penalty_weight;
+			}
+
+			// 3. 计算正确的累计 G 代价
+			double gh = g_value * (currentPtr->gScore + step_cost);
+			// ======================================================================
+
 			/* 计算实际走过的距离 */
 			double aclDistance = currentPtr->aclDistance + aclDist[i];
 			double fh = gh + h_value * getHeu(neighborPtr, endPtr); // 总的代价数值计算
+
 			// 如果为自由节点
 			if (neighborPtr->id == 0)
 			{
@@ -600,7 +792,6 @@ int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
 					uint64_t time_2 = getSystemNSec(); // 获取当前系统时间
 					terminatePtr = neighborPtr;
 					ParamsLast.time = (double)(time_2 - time_1) / 1000000.0f;
-					// cout<<"ParamsLast.time:"<<ParamsLast.time<<endl;
 					ParamsLast.dist = currentPtr->aclDistance;
 					findFlag = true;
 					return REACH_END;
@@ -612,7 +803,7 @@ int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
 					continue;
 				}
 			}
-			// id为1的话代表其为障碍物
+			// id为1的话代表其在 openset
 			else if (neighborPtr->id == 1)
 			{
 				// 如果邻居节点的g参数大于gh值,进行处理
@@ -636,13 +827,9 @@ int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
 		}
 	}
 	// 如果搜索失败
-	if (ParamsLast.time > 1000000)
-	{
-		std::cout << "Time consume in Astar path finding is " << ParamsLast.time << std::endl;
-		std::cout << "Path find failed." << std::endl;
-		findFlag = false;
-		return NO_PATH;
-	}
+	std::cout << "Path find failed." << std::endl;
+	findFlag = false;
+	return NO_PATH;
 }
 
 Vector2d AstarPathFinder::getTerminate(void)

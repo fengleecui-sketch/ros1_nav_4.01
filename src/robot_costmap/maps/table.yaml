@@ -1,4 +1,4 @@
-image: /home/robot1/Carto_bag/map/table.pgm
+image: table.pgm
 resolution: 0.05
 origin: [-1.05, -1.27086, 0.0]
 negate: 0

@@ -12,7 +12,7 @@ Fast_Security::~Fast_Security()
 void Fast_Security::InitParams(ros::NodeHandle &nh)
 {
   // 查看访问点
-  visitNodesPub = nh.advertise<visualization_msgs::Marker>("/Visited_nodes", 10);
+  visitNodesPub = nh.advertise<visualization_msgs::Marker>("/STATE_VISITED_nodes", 10);
   // 查看选出来的优化点
   visitOptpathPub = nh.advertise<visualization_msgs::Marker>("/Opt_path_visit", 10);
   // 查看采样点
@@ -56,7 +56,7 @@ void Fast_Security::InitParams(ros::NodeHandle &nh)
 }
 
 // 复位访问的节点
-void Fast_Security::resetVisited(void)
+void Fast_Security::resetSTATE_VISITED(void)
 {
   // 清空优化路径
   optpath.clear();
@@ -167,7 +167,7 @@ bool Fast_Security::isOccupied(const Vector2i gridpt) const
 }
 
 // 设定访问节点
-void Fast_Security::setVisited(const Vector2i gridpt)
+void Fast_Security::setSTATE_VISITED(const Vector2i gridpt)
 {
   // 判断是否被占据 或者说是不是障碍物
   int idx = gridpt[0];
@@ -194,7 +194,7 @@ bool Fast_Security::isRepeated(const Vector2i gridpt) const
 }
 
 // 获取访问的次数
-int Fast_Security::getVisitedNum(const Vector2i gridpt) const
+int Fast_Security::getSTATE_VISITEDNum(const Vector2i gridpt) const
 {
   // 判断是否被占据 或者说是不是障碍物
   int idx = gridpt[0];
@@ -434,7 +434,7 @@ void Fast_Security::Node_Extension(int addsearch,int minsearch,Vector2i point,Ve
 {
   // 判断求解的点是否在障碍物上
   // 设定为访问节点
-  setVisited(point);
+  setSTATE_VISITED(point);
   // 获取当前点
   pointExtension.push_back(point);
   // num-> i
@@ -458,7 +458,7 @@ void Fast_Security::Node_Extension(int addsearch,int minsearch,Vector2i point,Ve
     else
     {
       // 设定为访问节点
-      setVisited(pointS);
+      setSTATE_VISITED(pointS);
       // 获取当前点
       pointExtension.push_back(pointS);
     }
@@ -478,7 +478,7 @@ void Fast_Security::Node_Extension(int addsearch,int minsearch,Vector2i point,Ve
     else
     {
       // 设定为访问节点
-      setVisited(pointS);
+      setSTATE_VISITED(pointS);
       // 获取当前点
       pointExtension.push_back(pointS);
     }
@@ -1443,7 +1443,7 @@ vector<Vector2d> Fast_Security::Fast_Security_Search(vector<Vector2d> oripath)
 {
   completed_flag = 0;
   // 清除所有用到的容器
-  resetVisited();
+  resetSTATE_VISITED();
 
   // 将地图全变为0
   // 如果不归零无法正确判断重复访问的区域
@@ -1496,12 +1496,12 @@ void Fast_Security::visualNodes(void)
   // visual_SamplesNode(continuNodesPub,continuPointsWorld,0.5,0,0,1,1);
   // visual_SamplesNode(visitNodesPub,inflectPoinsWorld,0.5,1,0,0,1);
   // visual_SamplesNode(sampleNodesPub,connectPointsWorld,1,0,1,1,1);
-  // visual_VisitedNode(visitOptpathPub,visualOptpoints,1,1,0,0,1);
+  // visual_STATE_VISITEDNode(visitOptpathPub,visualOptpoints,1,1,0,0,1);
 
   visual_SamplesNode(continuNodesPub,continuPointsWorld,0.5,1,0,0,1);
   visual_SamplesNode(visitNodesPub,inflectPoinsWorld,0.5,1,0,0,1);
   visual_SamplesNode(sampleNodesPub,connectPointsWorld,0.5,1,0,0,1);
-  visual_VisitedNode(visitOptpathPub,optedpath,0.5,1,0,0,1);
+  visual_STATE_VISITEDNode(visitOptpathPub,optedpath,0.5,1,0,0,1);
 }
 
 // 查询间断点的数目
@@ -1957,7 +1957,7 @@ vector<Vector2d> Fast_Security::PathOptimization(vector<vector<Vector2i>> contin
           {
             vector<Vector2i> pointExtension;
             // 开始扩展 没扩展到的点进行扩展
-            if(getVisitedNum(origingridPath[start]) == 0)
+            if(getSTATE_VISITEDNum(origingridPath[start]) == 0)
             {
               Node_Extension(search_num/2,search_num/2,origingridPath[start],ver_first_second,pointExtension);
               // 添加进来
@@ -2030,7 +2030,7 @@ vector<Vector2d> Fast_Security::PathOptimization(vector<vector<Vector2i>> contin
       {
         // 获取势场数值
         nowpoint = tempoints.second[t];
-        nowvisit = getVisitedNum(nowpoint);
+        nowvisit = getSTATE_VISITEDNum(nowpoint);
         now_esdf = getESDFvalue(nowpoint);
         double distance = calPointLength(nowpoint,last);
         double dis_end = calPointLength(nowpoint,grid_map_end);
@@ -2071,7 +2071,7 @@ vector<Vector2d> Fast_Security::PathOptimization(vector<vector<Vector2i>> contin
       {
         // 获取势场数值
         nowpoint = tempoints.second[t];
-        nowvisit = getVisitedNum(nowpoint);
+        nowvisit = getSTATE_VISITEDNum(nowpoint);
         now_esdf = getESDFvalue(nowpoint);
         // cost = now_esdf/100.0f + 1.0f/nowvisit;
         // cost = now_esdf/100.0f;
@@ -2115,7 +2115,7 @@ vector<Vector2d> Fast_Security::PathOptimization(vector<vector<Vector2i>> contin
       {
         // 获取势场数值
         nowpoint = tempoints.second[t];
-        nowvisit = getVisitedNum(nowpoint);
+        nowvisit = getSTATE_VISITEDNum(nowpoint);
         now_esdf = getESDFvalue(nowpoint);
         double distance = calPointLength(nowpoint,last);
         double dis_end = calPointLength(nowpoint,grid_map_end);
@@ -2286,18 +2286,18 @@ vector<Vector2d> Fast_Security::PathOptimization(vector<vector<Vector2i>> contin
 }
 
 // 获取走廊访问的节点
-int Fast_Security::getCorridorVisitedNum(void)
+int Fast_Security::getCorridorSTATE_VISITEDNum(void)
 {
-  int visited_num = 0;
+  int STATE_VISITED_num = 0;
   // 遍历search_data 查看访问的节点数目
   for (int i = 0; i < search_data.size(); i++)
   {
     if(search_data[i] >= 1)
     {
-      visited_num++;
+      STATE_VISITED_num++;
     }
   }
-  return visited_num;
+  return STATE_VISITED_num;
 }
 
 // 获取最终优化过的路径的长度
@@ -2320,7 +2320,7 @@ float a_set,float r_set,float g_set,float b_set,float k_length)
   node_vis.header.frame_id = "map";
   node_vis.header.stamp = ros::Time::now();
 
-  node_vis.ns = "fast_security_visited";
+  node_vis.ns = "fast_security_STATE_VISITED";
 
   node_vis.type = visualization_msgs::Marker::CUBE_LIST;
   node_vis.action = visualization_msgs::Marker::ADD;
@@ -2359,7 +2359,7 @@ float a_set,float r_set,float g_set,float b_set,float k_length)
   pathPublish.publish(node_vis);  
 }
 
-void Fast_Security::visual_VisitedNode(ros::Publisher pathPublish, std::vector<Eigen::Vector2d> visitnodes,
+void Fast_Security::visual_STATE_VISITEDNode(ros::Publisher pathPublish, std::vector<Eigen::Vector2d> visitnodes,
 float a_set,float r_set,float g_set,float b_set,float length)
 {
   visualization_msgs::Marker node_vis;
@@ -2370,7 +2370,7 @@ float a_set,float r_set,float g_set,float b_set,float length)
   node_vis.color.r = r_set;
   node_vis.color.g = g_set;
   node_vis.color.b = b_set;
-  node_vis.ns = "fast_security_visited";
+  node_vis.ns = "fast_security_STATE_VISITED";
 
   node_vis.type = visualization_msgs::Marker::CUBE_LIST;
   node_vis.action = visualization_msgs::Marker::ADD;

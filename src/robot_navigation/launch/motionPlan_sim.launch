@@ -66,7 +66,7 @@
     <param name="search/margin" value="0.2" type="double"/>
     <param name="search/allocate_num" value="100000" type="int"/>
     <param name="search/check_num" value="5" type="int"/>
-    <param name="search/is_use_esdf" value="false" type="bool"/>
+    <param name="search/is_use_esdf" value="true" type="bool"/>
 
     <!-- fast security的参数设定 -->
     <!-- 最小按照实车半径0.3去给,这里保守一点给2.0 扩展栅格数目是search_length/resolution-->
@@ -99,4 +99,3 @@
   </node>
   
 </launch>
-

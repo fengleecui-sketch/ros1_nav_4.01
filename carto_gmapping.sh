@@ -8,11 +8,11 @@ gnome-terminal -t "roscore" -x bash -c "roscore;exec bash;"
 # sleep 5s
 
 # 激光雷达参数配置节点
-gnome-terminal -t "laser set" -- bash -c "source ~/Gitkraken/ws_livox/devel/setup.bash;roslaunch read_laser_data laser1_change_param.launch;exec bash"
+gnome-terminal -t "laser set" -- bash -c "source ~/ws_livox/devel/setup.bash;roslaunch read_laser_data laser1_change_param.launch;exec bash"
 
 # 启动cartographer建图节点
 gnome-terminal -t "carto gmapping" -- bash -c \
-"cd /home/action/Cartographer/Cartographer_Locatization;
+"cd /home/Cartographer/Cartographer_Locatization;
 source install_isolated/setup.bash;
 roslaunch cartographer_ros my_robot_2d.launch scan_topic:=/not_true_scan;exec bash"
 
@@ -23,8 +23,8 @@ wait
 exit 0
 
 # 保存地图
-cd /home/action/Cartographer/Cartographer_Locatization
+cd /home/Cartographer/Cartographer_Locatization
 source install_isolated/setup.bash
-rosservice call /write_state "{filename: '/home/action/carto_map.pbstream'}"
+rosservice call /write_state "{filename: '/home/carto_map.pbstream'}"
 
 #将carto_map.pbstream文件转化为pgm和yaml文件

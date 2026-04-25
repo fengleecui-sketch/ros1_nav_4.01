@@ -1,4 +1,4 @@
-image: /home/action/Cartographer/Cartographer_Locatization/src/cartographer_ros/cartographer_ros/map/carto_mapb.pgm
+image: carto_mapb.pgm
 resolution: 0.1
 origin: [-3.76455, -3.11227, 0.0]
 negate: 0
