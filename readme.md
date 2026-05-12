@@ -202,7 +202,8 @@ source ~/ros1_slam/devel/setup.bash
 roslaunch robot_usart usart_node.launch
 
 
- 加入github仓库步骤
+ 
+### 加入github仓库步骤
 git init
 git config --global user.email "fengleecui@gmail.com"
 git config --global user.name "Cuifengle"
@@ -211,3 +212,15 @@ git commit -m "首次提交"
 git branch -M main
 git remote add origin https://github.com/fengleecui-sketch/你的仓库名.git
 git push -u origin main
+
+
+### 机器人按照某一姿态回航充电的两种方法
+1、se2轨迹优化，通过se2规划可以实现到达目标点时按照某一姿态返航，
+2、使用dwa增加航向角代价
+
+### TEB规划划论文
+C. Rösmann, W. Feiten, T. Wösch, F. Hoffmann and T. Bertram: Trajectory modification considering dynamic constraints of autonomous robots. Proc. 7th German Conference on Robotics, Germany, Munich, 2012, pp 74–79.
+C. Rösmann, W. Feiten, T. Wösch, F. Hoffmann and T. Bertram: Efficient trajectory optimization using a sparse model. Proc. IEEE European Conference on Mobile Robots, Spain, Barcelona, 2013, pp. 138–143.
+
+
+### map-->odom怎样修正误差的？

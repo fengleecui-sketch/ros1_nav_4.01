@@ -1,6 +1,6 @@
-image: /home/action/Cartographer/Cartographer_Locatization/src/cartographer_ros/cartographer_ros/map/carto_mapc.pgm
+image: carto_mapc.pgm
 resolution: 0.1
-origin: [-3.73183, -2.99024, 0.0]
+origin: [ -3.73183, -2.99024, 0.0 ]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196

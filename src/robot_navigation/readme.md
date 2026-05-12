@@ -273,3 +273,23 @@ local_goal_sub = nh.subscribe("/local_goal", 1, &DWAPlanner::local_goal_callback
 5. 启动节点：roslaunch nav_lei demo_node.launch    目前demo_node.launch中可以同时显示A* JPS RRT三种算法规划的路径 和使用minimum_snap优化的JPS算法路径
 如果只对A*仿真 roslaunch nav_lei astar.launch 
 只对RRT进行仿真 roslaunch nav_lei rrt.launch
+
+
+## 后端：LBFGS 梯度优化（平滑 + 避障 + 动力学约束）
+https://github.com/ZJU-FAST-Lab/LBFGS-Lite
+
+## 后端：港科大经典 Fast-Planner 无人机规划框架，全套 ESDF + 轨迹优化
+https://github.com/HKUST-Aerial-Robotics/Fast-Planner
+
+
+## 混合astar轨迹规划
+https://github.com/ai-winter/ros_motion_planning
+
+【相关资料】
+混合A*路径规划算法原理推导：https://mr-winter.blog.csdn.net/article/details/138270476
+运动基元之Dubins曲线原理推导：https://mr-winter.blog.csdn.net/article/details/136423553
+运动基元之Reeds-Shepp曲线原理推导：https://mr-winter.blog.csdn.net/article/details/136994820
+共轭梯度轨迹优化算法原理推导：https://mr-winter.blog.csdn.net/article/details/140620586
+ros关节角度资料
+
+https://github.com/JoshMarino/gazebo_and_ros_control

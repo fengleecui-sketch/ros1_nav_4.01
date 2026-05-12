@@ -6,7 +6,7 @@
 #include <nav_msgs/Path.h>
 #include <visualization_msgs/Marker.h>
 #include <tf/tf.h>
-
+#include <tf/transform_listener.h>
 #include <robot_communication/localizationInfoBroadcast.h>
 
 #include <cmath>
@@ -110,6 +110,14 @@ public:
     nh_.param("USE_SPEED_CHECK", use_speed_check_, true);
     nh_.param("NEW_PATH_EPS", new_path_eps_, 0.02); // m，判断“新路径”的末点变化阈值
 
+    nh_.param("LOOKAHEAD_DIST", lookahead_dist_, 0.5); 
+    nh_.param("GOAL_TOL", goal_tol_, 0.25);
+    nh_.param("YAW_TOL", yaw_tol_, 0.1);  // 【新增】读取偏航角容忍度参数
+
+    // TF 相关参数
+    nh_.param("GLOBAL_FRAME", global_frame_, std::string("map"));
+    nh_.param("ROBOT_FRAME", robot_base_frame_, std::string("base_link"));
+
     // topics（保持与你的 DWA 一致）
     path_sub_ = nh_.subscribe("/opt_path", 1, &OmnidirectionalPIDLocalPlanner::pathCb, this);
     goal_sub_ = nh_.subscribe("/move_base_simple/goal", 1, &OmnidirectionalPIDLocalPlanner::goalCb, this);
@@ -185,6 +193,11 @@ private:
   {
     goal_ = *msg;
     has_goal_ = true;
+    
+    // 【新增】保存目标方向（从RViz点击确定）
+    goal_yaw_ = tf::getYaw(goal_.pose.orientation);
+    ROS_INFO("[robot_pid_local_planner] received goal at (%.2f, %.2f) with yaw=%.2f(%.1f°)",
+             goal_.pose.position.x, goal_.pose.position.y, goal_yaw_, goal_yaw_*180/M_PI);
 
     // 收到新目标：解除 reached 锁存
     reached_latched_ = false;
@@ -196,7 +209,7 @@ private:
   {
     x_ = msg->xPosition;
     y_ = msg->yPosition;
-    yaw_ = msg->chassisAngle;
+    yaw_ = msg->chassisAngle; // 【修复】使用 chassisAngle 而不是 chassisGyro（角速度）
 
     vx_fb_ = msg->xSpeed;
     vy_fb_ = msg->ySpeed;
@@ -208,18 +221,17 @@ private:
   // 取当前位姿 (x,y,yaw)
   void odomCb(const nav_msgs::OdometryConstPtr& msg)
   {
-    x_ = msg->pose.pose.position.x;
+x_ = msg->pose.pose.position.x;
     y_ = msg->pose.pose.position.y;
     yaw_ = tf::getYaw(msg->pose.pose.orientation);
-
     vx_fb_ = msg->twist.twist.linear.x;
     vy_fb_ = msg->twist.twist.linear.y;
     wz_fb_ = msg->twist.twist.angular.z;
-
     has_odom_ = true;
   }
 
   // 选“前瞻点”
+  // 选“前瞻点”并计算目标朝向
   bool computeLookaheadPoint(double& gx, double& gy, double& g_yaw_target)
   {
     if (!has_path_ || path_.poses.empty()) return false;
@@ -252,11 +264,60 @@ private:
       idx = i+1;
     }
 
-    gx = path_.poses[idx].pose.position.x;
-    gy = path_.poses[idx].pose.position.y;
+    gx = path_.poses[idx].pose.position.x; // 【修复】应该是 .x 而不是 .y
+    gy = path_.poses[idx].pose.position.y; // 【修复】添加 gy 赋值
 
-    // 目标朝向：指向前瞻点的方向
-    g_yaw_target = std::atan2(gy - y_, gx - x_);
+    // ================== 新增：朝向控制逻辑 ==================
+
+    // A. 计算规划路径在当前前瞻点处的切线方向
+    double path_tangent_yaw = yaw_; // 默认保持当前方向
+    
+    // 计算从最近点到前瞻点的方向（确保沿路径正确方向行驶）
+    if (idx > 0) {
+      // 用前一个点到当前前瞻点的向量作为路径切线
+      const double dx = path_.poses[idx].pose.position.x - path_.poses[idx-1].pose.position.x;
+      const double dy = path_.poses[idx].pose.position.y - path_.poses[idx-1].pose.position.y;
+      const double dist = std::hypot(dx, dy);
+      if (dist > 1e-6) {
+        path_tangent_yaw = std::atan2(dy, dx);
+      }
+    }
+    
+    // 备选：如果前瞻点后面还有点，也可以用前瞻点和下一个点
+    if (idx + 1 < (int)path_.poses.size()) {
+      const double dx = path_.poses[idx+1].pose.position.x - path_.poses[idx].pose.position.x;
+      const double dy = path_.poses[idx+1].pose.position.y - path_.poses[idx].pose.position.y;
+      const double dist = std::hypot(dx, dy);
+      if (dist > 1e-6) {
+        // 使用前瞻：更提前地调整方向
+        path_tangent_yaw = std::atan2(dy, dx);
+      }
+    }
+
+    // B. 获取 RViz 设定的真实最终目标朝向（从 goal_ 中取，绝不能从 path 取）
+    double final_goal_yaw = 0.0;
+    if (has_goal_) {
+      final_goal_yaw = tf::getYaw(goal_.pose.orientation);
+    }
+
+    // C. 距离终点较近时，平滑切换到最终姿态；否则车头对准路径切线
+    const auto& last_pos = path_.poses.back().pose.position;
+    double dist_to_last = std::hypot(last_pos.x - x_, last_pos.y - y_);
+
+    // 【改进】使用平滑的过渡而不是硬切换
+    // 过渡距离：至少 1.5 倍前瞻距离，但不少于 0.5m
+    double transition_dist = std::max(lookahead_dist_ * 1.5, 0.5);
+    
+    if (dist_to_last < transition_dist && has_goal_) {
+      // 【平滑过渡】：使用线性插值在路径切线和目标朝向之间过渡
+      double blend_ratio = dist_to_last / transition_dist;  // 0 ~ 1
+      double angle_diff = wrap_to_pi(final_goal_yaw - path_tangent_yaw);
+      g_yaw_target = path_tangent_yaw + (1.0 - blend_ratio) * angle_diff;  // 平滑过渡
+    } else {
+      g_yaw_target = path_tangent_yaw; // 车头顺着路径切线方向
+    }
+
+    // ========================================================
 
     // 发布局部路径（可视化：nearest 到 idx）
     nav_msgs::Path local;
@@ -264,7 +325,7 @@ private:
     for (int i = nearest; i <= idx; ++i) local.poses.push_back(path_.poses[i]);
     local_path_pub_.publish(local);
 
-    // marker
+    // marker (保持不变)
     visualization_msgs::Marker mk;
     mk.header = path_.header;
     mk.ns = "pid_local_goal";
@@ -287,17 +348,27 @@ private:
     return true;
   }
 
-  // ===== 到达终点判定（使用路径最后一个点） =====
+  // ===== 到达终点判定（使用 RViz 设定的目标方向） =====
   bool isReachedGoal() const
   {
     if (!has_path_ || path_.poses.empty()) return false;
-    const auto& last = path_.poses.back().pose.position;
-    const double dist_goal = std::hypot(last.x - x_, last.y - y_);
+    const auto& last_pos = path_.poses.back().pose.position;
+    
+    // 1. 判断位置误差
+    const double dist_goal = std::hypot(last_pos.x - x_, last_pos.y - y_);
     if (dist_goal > goal_tol_) return false;
 
+    // 2. 判断角度误差（必须使用真实的 goal_ 的姿态）
+    if (has_goal_) {
+      double final_yaw = tf::getYaw(goal_.pose.orientation);
+      double yaw_error = std::abs(wrap_to_pi(final_yaw - yaw_));
+      // yaw_tol_ 如果之前没在私有变量定义，记得在类的末尾加一句 double yaw_tol_{0.1};
+      if (yaw_error > yaw_tol_) return false; 
+    }
+
+    // 3. 判断速度是否彻底停稳
     if (use_speed_check_)
     {
-      // 速度很小才算真正到达，避免“刚进阈值又被惯性/噪声带出去”
       const double v = std::hypot(vx_fb_, vy_fb_);
       if (v > stop_v_tol_) return false;
       if (std::fabs(wz_fb_) > stop_w_tol_) return false;
@@ -313,8 +384,27 @@ private:
     cmd_pub_.publish(z);
   }
 
-  void onTimer(const ros::TimerEvent& ev)
+ void onTimer(const ros::TimerEvent& ev)
   {
+    // 【新增】通过 TF 获取机器人当前的全局位姿
+    tf::StampedTransform transform;
+    try {
+      // 查询最新的全局坐标系到机器人底盘的变换
+      tf_listener_.lookupTransform(global_frame_, robot_base_frame_, ros::Time(0), transform);
+      
+      x_ = transform.getOrigin().x();
+      y_ = transform.getOrigin().y();
+      yaw_ = tf::getYaw(transform.getRotation());
+      
+      // 只要成功获取到了 TF，就认为有了有效位置
+      has_odom_ = true; 
+    }
+    catch (tf::TransformException &ex) {
+      ROS_WARN_THROTTLE(1.0, "[robot_pid_local_planner] Cannot get TF: %s", ex.what());
+      publishZero();
+      return; // 拿不到当前位置，直接停车并返回
+    }
+
     if (!has_odom_)
     {
       publishZero();
@@ -434,6 +524,8 @@ private:
 
   double lookahead_dist_{0.6};
   double goal_tol_{0.25};
+
+  double yaw_tol_{0.1}; // 【新增】角度到达容忍度，0.1弧度约等于5.7度
   double max_vx_{0.4}, max_vy_{0.4}, max_wz_{0.8};
   double cmd_timeout_{0.5};
   double pub_hz_{30.0};
@@ -441,8 +533,13 @@ private:
   // state
   double x_{0}, y_{0}, yaw_{0};
   double vx_fb_{0}, vy_fb_{0}, wz_fb_{0};
+  double goal_yaw_{0.0}; // 【新增】从 RViz 设定的目标方向
 
   PID pid_x_, pid_y_, pid_yaw_;
+
+  tf::TransformListener tf_listener_; // 【新增】TF 监听器
+  std::string global_frame_{"map"};       // 【新增】全局坐标系名
+  std::string robot_base_frame_{"base_link"}; // 【新增】机器人坐标系名
 };
 
 int main(int argc, char** argv)

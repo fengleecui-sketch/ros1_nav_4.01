@@ -7,7 +7,7 @@ until rostopic list >/dev/null 2>&1; do
   sleep 0.2
 done
 # 2) 启动雷达
-gnome-terminal --title="lider_start" -- bash -c "source ~/ws_livox/devel/setup.bash; roslaunch livox_ros_driver2 rviz_msg_MID360.launch rviz_enable:=false"
+gnome-terminal --title="lider_start" -- bash -c "source ~/ws_livox/devel/setup.bash; roslaunch livox_ros_driver2 msg_MID360s.launch rviz_enable:=false"
 sleep 2
 # 3) 激光雷达数据转换成2d
 gnome-terminal --title="lider_msg_convert" -- bash -c "source ~/ros1_slam/devel/setup.bash; roslaunch livox_cloud_to_scan cloud_to_scan.launch"

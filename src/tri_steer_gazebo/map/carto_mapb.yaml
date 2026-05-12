@@ -1,6 +1,6 @@
-image: /home/action/Gitdesktop/ros1_slam/src/tri_steer_gazebo/map/carto_mapb.pgm
+image: carto_mapb.pgm
 resolution: 0.1
-origin: [-3.76455, -3.11227, 0.0]
+origin: [ -3.76455, -3.11227, 0.0 ]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196

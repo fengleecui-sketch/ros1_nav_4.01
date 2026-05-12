@@ -756,20 +756,34 @@ int AstarPathFinder::AstarGraphSearch(Vector2i start_pt, Vector2i end_pt)
 			// 1. 基础物理步长
 			double step_cost = edgeCostSets[i];
 
+			double penalty_cost = 0.0;
 			// 2. 叠加 ESDF 势场惩罚（真正加到 G 里！）
-			if(is_use_esdf)
+			if (is_use_esdf) 
+		
+		{
+			// 获取该点在全局代价地图中的数值 (0~100)
+			int map_cost = data[neighborPtr->index(0) * Y_SIZE + neighborPtr->index(1)];
+			
+			// 【拦截墙壁】：90以上视为绝对障碍物，惩罚一百万
+			if (map_cost >= 90) 
 			{
-				int nx = neighborPtr->index(0);
-				int ny = neighborPtr->index(1);
-				double esdf_dist = (double)data[nx * Y_SIZE + ny];
-
-				// 惩罚系数：越大越怕墙，建议 0.3 ~ 1.5
-				double penalty_weight = 0.8;
-				step_cost += esdf_dist * penalty_weight;
+				penalty_cost = 1000000.0; 
 			}
+			// 【梯度斥力】：只有 > 0 才有惩罚
+			else if (map_cost > 0)
+			{
+				// 🚨 致命排错点：必须加上 (double) 强制转换，绝杀整数除法 Bug！
+				double cost_ratio = (double)map_cost / 100.0; 
+				
+				// 既然 30 没用，我们下猛药！
+				// 改用 4次方 (pow(..., 4))。这会让中心区域极度顺滑，但墙边像刺猬一样扎人
+				double max_penalty = 50.0; 
+				penalty_cost = pow(cost_ratio, 4) * max_penalty; 
+			}
+		}
 
-			// 3. 计算正确的累计 G 代价
-			double gh = g_value * (currentPtr->gScore + step_cost);
+			// 🚨 致命排错点：严格控制括号和优先级，确保 penalty_cost 被死死地加在单步代价上！
+		double gh = currentPtr->gScore + (g_value * step_cost) + penalty_cost;
 			// ======================================================================
 
 			/* 计算实际走过的距离 */
